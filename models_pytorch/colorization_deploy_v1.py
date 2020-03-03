@@ -8,8 +8,9 @@ import argparse
 
 
 class colorization_deploy_v1(nn.Module):
-    def __init__(self):
+    def __init__(self, T=0.38):
         super(generator,self).__init__()
+        self.T= T
 
         self.conv1_1 = nn.Conv2d(3,64, kernel_size=3, stride=1, padding=1)
         self.conv1_2 = nn.Conv2d(64,64, kernel_size=3, stride=2, padding=1)
@@ -69,4 +70,4 @@ class colorization_deploy_v1(nn.Module):
         out = self.conv_313(F.relu(self.conv8_3(F.relu(self.conv8_2(F.relu(self.conv8_1(out)))))))
      
         # annealing mean computation missing
-        return self.sofm(out)
+        return self.sofm(out/self.T)
