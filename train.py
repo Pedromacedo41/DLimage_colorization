@@ -38,7 +38,7 @@ def loss(input, img_ab):
     d2 = torch.tensor(nnenc.encode_points_mtx_nd(img_ab), dtype = torch.float64)
     # dimension 1 x 224 x 224
     gpu(d2)
-    weights = priors.compute(torch.ones([1,313,224,224]))
+    weights = priors.compute(imput)
  
     z2 = torch.sum(-imput.log_().mul_(d2), dim=1)
     z2.mul_(weights)
