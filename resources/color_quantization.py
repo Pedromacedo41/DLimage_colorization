@@ -12,6 +12,7 @@ class NNEncode():
         self.NN = int(NN)
         self.sigma = sigma
         self.nbrs = nn.NearestNeighbors(n_neighbors=NN, algorithm='ball_tree').fit(self.cc)
+        self.pts_enc_flt = None
 
         self.alreadyUsed = False
 
@@ -43,13 +44,13 @@ class NNEncode():
         pts_dec_nd = unflatten_2d_array(pts_dec_flt,pts_enc_nd,axis=axis)
         return pts_dec_nd
 
-    def decode_1hot_mtx_nd(self,pts_enc_nd,axis=1,returnEncode=False):
-        pts_1hot_nd = nd_argmax_1hot(pts_enc_nd,axis=axis)
-        pts_dec_nd = self.decode_points_mtx_nd(pts_1hot_nd,axis=axis)
-        if(returnEncode):
-            return (pts_dec_nd,pts_1hot_nd)
-        else:
-            return pts_dec_nd
+    # def decode_1hot_mtx_nd(self,pts_enc_nd,axis=1,returnEncode=False):
+    #     pts_1hot_nd = nd_argmax_1hot(pts_enc_nd,axis=axis)
+    #     pts_dec_nd = self.decode_points_mtx_nd(pts_1hot_nd,axis=axis)
+    #     if(returnEncode):
+    #         return (pts_dec_nd,pts_1hot_nd)
+    #     else:
+    #         return pts_dec_nd
 
 # *****************************
 # ***** Utility functions *****

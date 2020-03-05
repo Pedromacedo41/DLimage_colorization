@@ -4,8 +4,8 @@ import numpy as np
 
 # to transform image to Lab color scale
 from skimage import io, color
-from models_pytorch.colorization_deploy_v1 import colorization_deploy_v1
-from resources.Color_quantization import *
+from models.colorization_deploy_v1 import colorization_deploy_v1
+from resources.color_quantization import *
 from resources.weights import *
 import os
 
