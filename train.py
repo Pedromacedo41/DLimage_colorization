@@ -5,8 +5,8 @@ import numpy as np
 # to transform image to Lab color scale
 from skimage import io, color
 from models.colorization_deploy_v1 import colorization_deploy_v1
-from resources.color_quantization import *
-from resources.weights import *
+from utils.color_quantization import NNEncode
+from utils.weights import PriorFactor
 import os
 
 
