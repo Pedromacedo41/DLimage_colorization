@@ -29,12 +29,11 @@ nnenc = NNEncode(nb_neighboors,sigma,km_filepath=os.path.join(ENC_DIR,'pts_in_hu
 priors = PriorFactor(1, gamma= 0.5, priorFile=os.path.join(ENC_DIR,'prior_probs.npy'))
 
 def loss(input, img_ab):
-
-
-    #d1 = nnenc.decode_points_mtx_nd(input)
+    '''
     img_ab = np.ones(shape= (1,2,224,224))
     imput = torch.ones([1,313,224,224], dtype = torch.float64)
     gpu(imput)
+    ''''
 
     d2 = torch.tensor(nnenc.encode_points_mtx_nd(img_ab), dtype = torch.float64)
     # dimension 1 x 224 x 224
@@ -45,9 +44,6 @@ def loss(input, img_ab):
     z2.mul_(weights)
 
     return z2.sum()
-
-    #print((nnenc.decode_points_mtx_nd(torch.ones([1,313,224,224]).numpy())).shape)
-    #print(d2.shpae)
 
 def main():
 
