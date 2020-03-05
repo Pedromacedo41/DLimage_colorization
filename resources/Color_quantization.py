@@ -1,3 +1,6 @@
+import sklearn.neighbors as nn
+import numpy as np
+
 class NNEncode():
     ''' Encode points using NN search and Gaussian kernel '''
     def __init__(self,NN,sigma,km_filepath='',cc=-1):

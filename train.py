@@ -1,17 +1,53 @@
 import torch
 import torch.nn as nn
+import numpy as np 
 
 # to transform image to Lab color scale
 from skimage import io, color
 from models_pytorch.colorization_deploy_v1 import colorization_deploy_v1
 from resources.Color_quantization import *
-import sklearn.neighbors as nn
+from resources.weights import *
+import os
 
+
+use_gpu = torch.cuda.is_available()
+def gpu(tensor, gpu=use_gpu):
+    if gpu:
+        return tensor.cuda()
+    else:
+        return tensor
+
+
+sigma = 5
+nb_neighboors = 10
+ENC_DIR = './resources/'
+
+# encoder_decoder ab to Q space
+nnenc = NNEncode(nb_neighboors,sigma,km_filepath=os.path.join(ENC_DIR,'pts_in_hull.npy'))
+
+# weights for balanced loss
+priors = PriorFactor(1, gamma= 0.5, priorFile=os.path.join(ENC_DIR,'prior_probs.npy'))
+
+def loss(input, img_ab):
+
+
+    #d1 = nnenc.decode_points_mtx_nd(input)
+    img_ab = np.ones(shape= (1,2,224,224))
+    imput = torch.ones([1,313,224,224])
+
+    d2 = torch.tensor(nnenc.encode_points_mtx_nd(img_ab))
+    print(d2.shape)
+
+    # dimension 1 x 224 x 224
+    weights = priors.compute(torch.ones([1,313,224,224]))
+    
+    print(imput.log_().shape)
+
+    
+    #print((nnenc.decode_points_mtx_nd(torch.ones([1,313,224,224]).numpy())).shape)
+    #print(d2.shpae)
 
 def main():
-
-    sigma = 5
-    nnenc = NNEncode(nn,self.sigma,km_filepath=os.path.join(self.ENC_DIR,'pts_in_hull.npy'))
 
     # parameter of weights in Z= H_gt^-1(Y)
     
@@ -25,9 +61,13 @@ def main():
 
     loss_epoch = []
 
-    net = colorization_deploy_v1()
+    net = colorization_deploy_v1(T=0.38)
     optimizer = torch.optim.Adam(net.parameters(),lr=lr)
 
+    result = net(torch.ones([1,1,224,224]))
+    print(loss(result.detach().numpy(),result.detach().numpy()))
+
+    '''
     for e in range(nb_epochs):
   
         loss = 0  
@@ -44,11 +84,8 @@ def main():
         loss+= loss
                         
         loss_epoch.append(loss)
+     '''
 
-
-
-def loss(input, img_rgb):
-    
 
 
 
