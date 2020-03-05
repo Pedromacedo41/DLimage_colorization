@@ -20,7 +20,7 @@ def gpu(tensor, gpu=use_gpu):
 
 sigma = 5
 nb_neighboors = 10
-ENC_DIR = './resources/'
+ENC_DIR = './utils/'
 
 # encoder_decoder ab to Q space
 nnenc = NNEncode(nb_neighboors,sigma,km_filepath=os.path.join(ENC_DIR,'pts_in_hull.npy'))
