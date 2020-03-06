@@ -15,7 +15,7 @@ class PriorFactor():
         self.verbose = verbose
 
         # empirical prior probability
-        self.prior_probs = torch.as_tensor(np.load(priorFile))
+        self.prior_probs = torch.as_tensor(np.load(priorFile), dtype=torch.float64)
 
         # define uniform probability
         self.uni_probs = torch.as_tensor(np.zeros_like(self.prior_probs))

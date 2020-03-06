@@ -20,7 +20,7 @@ def gpu(tensor, gpu=use_gpu):
 
 sigma = 5
 nb_neighboors = 10
-ENC_DIR = './resources/'
+ENC_DIR = './utils/'
 
 # encoder_decoder ab to Q space
 nnenc = NNEncode(nb_neighboors,sigma,km_filepath=os.path.join(ENC_DIR,'pts_in_hull.npy'))
@@ -29,23 +29,21 @@ nnenc = NNEncode(nb_neighboors,sigma,km_filepath=os.path.join(ENC_DIR,'pts_in_hu
 priors = PriorFactor(1, gamma= 0.5, priorFile=os.path.join(ENC_DIR,'prior_probs.npy'))
 
 def loss(input, img_ab):
-
-
-    #d1 = nnenc.decode_points_mtx_nd(input)
+    '''
     img_ab = np.ones(shape= (1,2,224,224))
-    imput = torch.ones([1,313,224,224])
+    imput = torch.ones([1,313,224,224], dtype = torch.float64)
+    gpu(imput)
+    ''''
 
-    d2 = torch.tensor(nnenc.encode_points_mtx_nd(img_ab))
-    print(d2.shape)
-
+    d2 = torch.tensor(nnenc.encode_points_mtx_nd(img_ab), dtype = torch.float64)
     # dimension 1 x 224 x 224
-    weights = priors.compute(torch.ones([1,313,224,224]))
-    
-    print(imput.log_().shape)
+    gpu(d2)
+    weights = priors.compute(imput)
+ 
+    z2 = torch.sum(-imput.log_().mul_(d2), dim=1)
+    z2.mul_(weights)
 
-    
-    #print((nnenc.decode_points_mtx_nd(torch.ones([1,313,224,224]).numpy())).shape)
-    #print(d2.shpae)
+    return z2.sum()
 
 def main():
 
