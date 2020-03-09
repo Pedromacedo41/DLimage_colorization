@@ -40,6 +40,7 @@ nnenc = NNEncode(nb_neighboors,sigma,km_filepath=os.path.join(ENC_DIR,'pts_in_hu
 # weights for balanced loss
 priors = PriorFactor(1, gamma= 0.5, priorFile=os.path.join(ENC_DIR,'prior_probs.npy'))
 
+
 def loss_fn(imput, img_ab, device='cpu:0'):
     #d2 = gpu(torch.tensor(nnenc.encode_points_mtx_nd(img_ab.numpy()), dtype= torch.float32))
     d2 = torch.tensor(nnenc.encode_points_mtx_nd(img_ab.numpy()), dtype= torch.float32).to(device)
@@ -101,15 +102,17 @@ def train(args, n_epochs=4):
 
     n_data = len(dataloader.dataset)
 
+    loss_fn = nn.MSELoss()
+
     for e in range(n_epochs):
         running_loss = 0
         processed = 0
         for inputs, inputs_ab, classes in dataloader:
             inputs = gpu(inputs)
-            inputs_ab = inputs_ab.detach()
+            inputs_ab = inputs_ab.to('cuda:3')
             outputs = model(inputs)
             optimizer.zero_grad()
-            loss = loss_fn(outputs, inputs_ab, 'cuda:3')
+            loss = loss_fn(outputs, inputs_ab)
             loss.backward()
             optimizer.step()
             running_loss+=loss.item()
