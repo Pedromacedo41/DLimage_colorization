@@ -2,6 +2,7 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 import pathlib
 from PIL import Image
+from skimage import color
 import numpy as np
 
 
@@ -21,10 +22,13 @@ class ImageDataset(Dataset):
 
   def __getitem__(self, idx):
     _path, _class = self.images[idx]
-    im = Image.open(_path)
-    if self._transform:
-      im = self._transform(im)
-    return (im, _class)
+    rgb = Image.open(_path)
+    rgb = transforms.Resize((256,256), Image.BICUBIC)(rgb)
+    rgb = np.array(rgb)
+    Lab = color.rgb2lab(rgb).astype(np.float32).transpose(2,0,1)
+    l = Lab[0,:,:][np.newaxis, ...]
+    ab = Lab[[1,2],:,:]
+    return (l, ab, _class)
 
   def __len__(self):
     return len(self.images)

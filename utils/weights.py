@@ -55,6 +55,6 @@ class PriorFactor():
             return corr_factor[:,:,:,na()]
     '''
 
-    def compute(self, input):
-        q_ind_max_img = torch.argmax(input, dim=1)
+    def compute(self, _input):
+        q_ind_max_img = torch.argmax(_input, dim=1)
         return self.prior_factor[q_ind_max_img]
