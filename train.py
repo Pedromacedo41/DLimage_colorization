@@ -58,9 +58,8 @@ def main():
     optimizer = torch.optim.Adam(net.parameters(),lr=lr)
 
     img_ab = np.ones(shape= (1,2,224,224))
-    result = net(torch.ones([1,1,224,224]))
+    output = net(torch.ones([1,1,224,224]))
 
-    output = nn.functional.interpolate(result, scale_factor=4, mode='nearest')
     gpu(output)
 
     print(loss(output, img_ab))
@@ -83,7 +82,6 @@ def main():
                         
         loss_epoch.append(loss)
      '''
-
 
 
 

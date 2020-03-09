@@ -116,7 +116,10 @@ class colorization_deploy_v1(nn.Module):
             self.conv8_3,
             nn.ReLU(),
 
-            self.conv8_313
+            self.conv8_313,
+
+            nn.Upsample(scale_factor=4, mode='bicubic')
+
         )
 
        
