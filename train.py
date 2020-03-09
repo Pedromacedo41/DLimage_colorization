@@ -40,6 +40,38 @@ def loss(imput, img_ab):
     z2.mul_(weights)
     return z2.sum()
 
+def logist_mask(relative_loss):
+    """
+    relative_loss = pixel_loss / max_loss (<= 1)
+    """
+    return 1 / (1 + 20 * torch.exp(-15 * relative_loss))
+
+def focal_loss(input, img_ab):
+    gpu(imput)
+    d2 = torch.tensor(nnenc.encode_points_mtx_nd(img_ab), dtype= torch.float32)
+    # dimension 1 x 224 x 224
+    gpu(d2)
+    weights = priors.compute(imput)
+ 
+    z2 = torch.sum(-imput.log_().mul_(d2), dim=1)
+    gpu(z2)
+    z2.mul_(weights)
+
+    # Max pixel loss
+    max_ = torch.max(z2)
+
+    # Copy z2 to a new tensor
+    Rel_loss = z2.clone()
+    Rel_loss.requires_grad_(False)
+
+    Rel_loss = Rel_loss / max_
+
+    # Mask
+    mask_ = logist_mask(Rel_loss)
+    z2.mul_(mask_.data)
+
+    return z2.sum()
+
 def main():
 
     # parameter of weights in Z= H_gt^-1(Y)
