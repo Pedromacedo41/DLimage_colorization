@@ -28,21 +28,16 @@ nnenc = NNEncode(nb_neighboors,sigma,km_filepath=os.path.join(ENC_DIR,'pts_in_hu
 # weights for balanced loss
 priors = PriorFactor(1, gamma= 0.5, priorFile=os.path.join(ENC_DIR,'prior_probs.npy'))
 
-def loss(input, img_ab):
-    '''
-    img_ab = np.ones(shape= (1,2,224,224))
-    imput = torch.ones([1,313,224,224], dtype = torch.float64)
+def loss(imput, img_ab):
     gpu(imput)
-    ''''
-
-    d2 = torch.tensor(nnenc.encode_points_mtx_nd(img_ab), dtype = torch.float64)
+    d2 = torch.tensor(nnenc.encode_points_mtx_nd(img_ab), dtype= torch.float32)
     # dimension 1 x 224 x 224
     gpu(d2)
     weights = priors.compute(imput)
  
     z2 = torch.sum(-imput.log_().mul_(d2), dim=1)
+    gpu(z2)
     z2.mul_(weights)
-
     return z2.sum()
 
 def main():
@@ -62,8 +57,12 @@ def main():
     net = colorization_deploy_v1(T=0.38)
     optimizer = torch.optim.Adam(net.parameters(),lr=lr)
 
-    result = net(torch.ones([1,1,224,224]))
-    print(loss(result.detach().numpy(),result.detach().numpy()))
+    img_ab = np.ones(shape= (1,2,224,224))
+    output = net(torch.ones([1,1,224,224]))
+
+    gpu(output)
+
+    print(loss(output, img_ab))
 
     '''
     for e in range(nb_epochs):
@@ -83,7 +82,6 @@ def main():
                         
         loss_epoch.append(loss)
      '''
-
 
 
 

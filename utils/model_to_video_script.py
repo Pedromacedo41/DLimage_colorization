@@ -1,6 +1,5 @@
 import argparse
 
-
 '''
 Script for making a colorful video from a legacy black and white one
 '''
