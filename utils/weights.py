@@ -3,7 +3,7 @@ import numpy as np
 
 class PriorFactor():
     ''' Class handles prior factor '''
-    def __init__(self,alpha,gamma=0,verbose=True,priorFile=''):
+    def __init__(self,alpha,gamma=0,verbose=False,priorFile=''):
         # INPUTS
         #   alpha           integer     prior correction factor, 0 to ignore prior, 1 to divide by prior, alpha to divide by prior**alpha
         #   gamma           integer     percentage to mix in uniform prior with empirical prior
