@@ -44,7 +44,7 @@ class colorization_deploy_v1(nn.Module):
         self.conv8_3 = nn.Conv2d(256,256, kernel_size=3, stride=1, padding=1)
 
         # self.conv8_313 = nn.Conv2d(256,313, kernel_size=1, stride=1)
-        self.conv_ab = nn.Conv2d(256,2, kernel_size=1, stride=1)
+        self.conv_ab = nn.Conv2d(256, 2, kernel_size=1, stride=1)
 
         self.bn1 = nn.BatchNorm2d(64)
         self.bn2 = nn.BatchNorm2d(128)
@@ -118,13 +118,12 @@ class colorization_deploy_v1(nn.Module):
             self.conv_ab,
 
             nn.Upsample(scale_factor=4, mode='nearest')
-
         )
 
        
 
     def forward(self, _input):
-        return self.lin(input)
+        return self.lin(_input)
 
  
 
@@ -132,5 +131,5 @@ class colorization_deploy_v1(nn.Module):
 if __name__ == '__main__': 
     net = colorization_deploy_v1()
     t = net(torch.ones([1,1,224,224]))
-    # print(t)
+    print(t)
     print(t.shape)

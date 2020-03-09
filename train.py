@@ -88,14 +88,14 @@ def focal_loss(input, img_ab):
     return z2.sum()
 
 def train(args, n_epochs=4):
-    batch_size = 42
+    batch_size = 224
     lr = 1e-4
 
     dataset = ImageDataset(args.images)
     dataloader = DataLoader(dataset, batch_size, True, num_workers=16)
 
     model = colorization_deploy_v1(T=0.38)
-    model = nn.DataParallel(model, range(3), 3)
+    model = nn.DataParallel(model)
     model = gpu(model)
     
     optimizer = torch.optim.Adam(model.parameters(),lr=lr)
@@ -109,7 +109,7 @@ def train(args, n_epochs=4):
         processed = 0
         for inputs, inputs_ab, classes in dataloader:
             inputs = gpu(inputs)
-            inputs_ab = inputs_ab.to('cuda:3')
+            inputs_ab = gpu(inputs_ab)
             outputs = model(inputs)
             optimizer.zero_grad()
             loss = loss_fn(outputs, inputs_ab)
@@ -117,8 +117,10 @@ def train(args, n_epochs=4):
             optimizer.step()
             running_loss+=loss.item()
             processed += inputs.shape[0]
+            print(f'Loss: {loss.item()}')
             print(f'Processed {processed} out of {n_data}: {100*processed/n_data} %')
-        print(f'Epoch: {e}\nMean loss: {n_data}\n')
+        print(f'Epoch: {e}\nMean loss: {running_loss}\n')
+        model.save(f'model_{e}')
 
 
 def main():
