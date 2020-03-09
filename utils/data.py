@@ -1,8 +1,11 @@
+from torch.utils.data import Dataset
 from torchvision import transforms
 import pathlib
 from PIL import Image
+import numpy as np
 
-class ImageLoader:
+
+class ImageDataset(Dataset):
   def __init__(self, root, transform=None):
     self._transform = transform
     self.images = []
@@ -23,10 +26,13 @@ class ImageLoader:
       im = self._transform(im)
     return (im, _class)
 
+  def __len__(self):
+    return len(self.images)
+
   
 
 if __name__=='__main__':
-  il = ImageLoader('images', transform=transforms.ToTensor())
+  il = ImageDataset('images', transform=np.array)
   print(il.classes)
   print(il.class_to_idx)
   print(il.images)
