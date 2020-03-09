@@ -23,7 +23,7 @@ def parse_args():
 
 
 use_gpu = torch.cuda.is_available()
-def gpu(tensor, gpu=use_gpu):
+def gpu(tensor, gpu=use_gpu, device=None):
     if gpu:
         return tensor.cuda()
     else:
@@ -40,15 +40,16 @@ nnenc = NNEncode(nb_neighboors,sigma,km_filepath=os.path.join(ENC_DIR,'pts_in_hu
 # weights for balanced loss
 priors = PriorFactor(1, gamma= 0.5, priorFile=os.path.join(ENC_DIR,'prior_probs.npy'))
 
-def loss_fn(imput, img_ab):
-    d2 = gpu(torch.tensor(nnenc.encode_points_mtx_nd(img_ab.numpy()), dtype= torch.float32))
+def loss_fn(imput, img_ab, device='cpu:0'):
+    #d2 = gpu(torch.tensor(nnenc.encode_points_mtx_nd(img_ab.numpy()), dtype= torch.float32))
+    d2 = torch.tensor(nnenc.encode_points_mtx_nd(img_ab.numpy()), dtype= torch.float32).to(device)
  
     z2 = -imput.log()
     del d2
 
     z2 = torch.sum(z2, dim=1)
 
-    weights = gpu(priors.compute(imput))
+    weights = priors.compute(imput).to(device)
     z2 = z2.mul(weights)
 
     return z2.sum()
@@ -86,35 +87,35 @@ def focal_loss(input, img_ab):
     return z2.sum()
 
 def train(args, n_epochs=4):
-    batch_size = 32
+    batch_size = 42
     lr = 1e-4
 
     dataset = ImageDataset(args.images)
-    dataloader = DataLoader(dataset, batch_size, True, num_workers=4)
+    dataloader = DataLoader(dataset, batch_size, True, num_workers=16)
 
-    model = gpu(colorization_deploy_v1(T=0.38))
-    # pp = 0
-    # for parameter in model.parameters():
-    #     nn = 1
-    #     for s in parameter.size():
-    #         nn = nn*s
-    #     pp += nn
-    # print(pp)
+    model = colorization_deploy_v1(T=0.38)
+    model = nn.DataParallel(model, range(3), 3)
+    model = gpu(model)
+    
     optimizer = torch.optim.Adam(model.parameters(),lr=lr)
+
+    n_data = len(dataloader.dataset)
 
     for e in range(n_epochs):
         running_loss = 0
+        processed = 0
         for inputs, inputs_ab, classes in dataloader:
-            gpu(inputs)
+            inputs = gpu(inputs)
             inputs_ab = inputs_ab.detach()
             outputs = model(inputs)
-            print(inputs.shape, outputs.shape, inputs_ab.shape)
             optimizer.zero_grad()
-            loss = loss_fn(outputs, inputs_ab)
+            loss = loss_fn(outputs, inputs_ab, 'cuda:3')
             loss.backward()
             optimizer.step()
             running_loss+=loss.item()
-        print(f'Epoch: {e}\nMean loss: {running_loss/len(dataloader.dataset)}\n')
+            processed += inputs.shape[0]
+            print(f'Processed {processed} out of {n_data}: {100*processed/n_data} %')
+        print(f'Epoch: {e}\nMean loss: {n_data}\n')
 
 
 def main():

@@ -13,7 +13,7 @@ class ImageDataset(Dataset):
     self.class_to_idx = {}
     path = pathlib.Path(root)
     for i in path.rglob('*'):
-      if i.is_file():
+      if i.is_file() and i.suffix in ('png', '.jpg', '.jpeg'):
         _class = i.parts[-2]
         _class_id = self.class_to_idx.get(_class, len(self.class_to_idx))
         self.class_to_idx[_class] = _class_id
@@ -22,7 +22,7 @@ class ImageDataset(Dataset):
 
   def __getitem__(self, idx):
     _path, _class = self.images[idx]
-    rgb = Image.open(_path)
+    rgb = Image.open(_path).convert("RGB")
     rgb = transforms.Resize((256,256), Image.BICUBIC)(rgb)
     rgb = np.array(rgb)
     Lab = color.rgb2lab(rgb).astype(np.float32).transpose(2,0,1)
