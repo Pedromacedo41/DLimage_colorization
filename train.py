@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 import numpy as np 
+import argparse
 
 # to transform image to Lab color scale
 from skimage import io, color
@@ -11,6 +12,14 @@ from utils.color_quantization import NNEncode
 from utils.weights import PriorFactor
 
 from utils.data import ImageDataset
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='')
+    parser.add_argument('--images', default='images', type=str)
+
+    args = parser.parse_args()
+    return args
 
 
 use_gpu = torch.cuda.is_available()
@@ -73,14 +82,14 @@ def focal_loss(input, img_ab):
 
     return z2.sum()
 
-def train(n_epochs=4):
+def train(args, n_epochs=4):
     batch_size = 32
     lr = 1e-4
 
-    dataset = ImageDataset('images')
+    dataset = ImageDataset(args.images)
     dataloader = DataLoader(dataset, batch_size, True, num_workers=4)
 
-    model = colorization_deploy_v1(T=0.38)
+    model = gpu(colorization_deploy_v1(T=0.38))
     # pp = 0
     # for parameter in model.parameters():
     #     nn = 1
@@ -93,6 +102,7 @@ def train(n_epochs=4):
     for e in range(n_epochs):
         running_loss = 0
         for inputs, inputs_ab, classes in dataloader:
+            gpu(inputs)
             inputs_ab = inputs_ab.detach()
             outputs = model(inputs)
             print(inputs.shape, outputs.shape, inputs_ab.shape)
@@ -118,6 +128,7 @@ def main():
 
 
 if __name__ == '__main__': 
-    torch.autograd.set_detect_anomaly(True)
-    train()
+    # torch.autograd.set_detect_anomaly(True)
+    args = parse_args()
+    train(args)
 
