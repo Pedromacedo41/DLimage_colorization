@@ -1,5 +1,7 @@
+import os
 import torch
 import torch.nn as nn
+from torch.utils.data import DataLoader
 import numpy as np 
 
 # to transform image to Lab color scale
@@ -7,7 +9,8 @@ from skimage import io, color
 from models.colorization_deploy_v1 import colorization_deploy_v1
 from utils.color_quantization import NNEncode
 from utils.weights import PriorFactor
-import os
+
+from utils.data import ImageDataset
 
 
 use_gpu = torch.cuda.is_available()
@@ -28,63 +31,62 @@ nnenc = NNEncode(nb_neighboors,sigma,km_filepath=os.path.join(ENC_DIR,'pts_in_hu
 # weights for balanced loss
 priors = PriorFactor(1, gamma= 0.5, priorFile=os.path.join(ENC_DIR,'prior_probs.npy'))
 
-def loss(imput, img_ab):
-    gpu(imput)
-    d2 = torch.tensor(nnenc.encode_points_mtx_nd(img_ab), dtype= torch.float32)
-    # dimension 1 x 224 x 224
-    gpu(d2)
+def loss_fn(imput, img_ab):
+    d2 = gpu(torch.tensor(nnenc.encode_points_mtx_nd(img_ab.numpy()), dtype= torch.float32))
     weights = priors.compute(imput)
  
-    z2 = torch.sum(-imput.log_().mul_(d2), dim=1)
-    gpu(z2)
-    z2.mul_(weights)
+    z2 = -imput.log().mul(d2)
+    z2 = torch.sum(z2, dim=1)
+    z2 = z2.mul(weights)
+
     return z2.sum()
+
+
+def train(n_epochs=4):
+    batch_size = 32
+    lr = 1e-4
+
+    dataset = ImageDataset('images')
+    dataloader = DataLoader(dataset, batch_size, True, num_workers=4)
+
+    model = colorization_deploy_v1(T=0.38)
+    # pp = 0
+    # for parameter in model.parameters():
+    #     nn = 1
+    #     for s in parameter.size():
+    #         nn = nn*s
+    #     pp += nn
+    # print(pp)
+    optimizer = torch.optim.Adam(model.parameters(),lr=lr)
+
+    for e in range(n_epochs):
+        running_loss = 0
+        for inputs, inputs_ab, classes in dataloader:
+            inputs_ab = inputs_ab.detach()
+            outputs = model(inputs)
+            print(inputs.shape, outputs.shape, inputs_ab.shape)
+            optimizer.zero_grad()
+            loss = loss_fn(outputs, inputs_ab)
+            loss.backward()
+            optimizer.step()
+            running_loss+=loss.item()
+        print(f'Epoch: {e}\nMean loss: {running_loss/len(dataloader.dataset)}\n')
+
 
 def main():
 
-    # parameter of weights in Z= H_gt^-1(Y)
-    
-
-    # balancing between balanced classes weighted loss and average loss
-    lamb = 0.5
-
-    batch_size = 50
-    lr = 1e-4
-    nb_epochs = 1000
-
-    loss_epoch = []
-
     net = colorization_deploy_v1(T=0.38)
-    optimizer = torch.optim.Adam(net.parameters(),lr=lr)
+    optimizer = torch.optim.Adam(net.parameters(),lr=1e-4)
 
-    img_ab = np.ones(shape= (1,2,224,224))
-    output = net(torch.ones([1,1,224,224]))
+    img_ab = torch.ones((3,2,224,224))
+    output = net(torch.ones([3,1,224,224]))
 
     gpu(output)
 
-    print(loss(output, img_ab))
-
-    '''
-    for e in range(nb_epochs):
-  
-        loss = 0  
-
-        # define some dataloader
-        # result= net(input)
-        
-        # compute loss
-        # loss = f(result, ground_truth)
-          
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        loss+= loss
-                        
-        loss_epoch.append(loss)
-     '''
-
+    print(loss_fn(output, img_ab))
 
 
 if __name__ == '__main__': 
-    main()
+    torch.autograd.set_detect_anomaly(True)
+    train()
 
