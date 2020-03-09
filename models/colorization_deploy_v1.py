@@ -12,7 +12,6 @@ class colorization_deploy_v1(nn.Module):
     def __init__(self, T=0.38, ab_mode= False):
         super(colorization_deploy_v1, self).__init__()
         self.T= T
-        self.deconding_layer = decoding_layer
 
         self.conv1_1 = nn.Conv2d(1,64, kernel_size=3, stride=1, padding=1)
         self.conv1_2 = nn.Conv2d(64,64, kernel_size=3, stride=2, padding=1)
