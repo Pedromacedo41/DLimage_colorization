@@ -42,10 +42,13 @@ priors = PriorFactor(1, gamma= 0.5, priorFile=os.path.join(ENC_DIR,'prior_probs.
 
 def loss_fn(imput, img_ab):
     d2 = gpu(torch.tensor(nnenc.encode_points_mtx_nd(img_ab.numpy()), dtype= torch.float32))
-    weights = priors.compute(imput)
  
-    z2 = -imput.log().mul(d2)
+    z2 = -imput.log()
+    del d2
+
     z2 = torch.sum(z2, dim=1)
+
+    weights = gpu(priors.compute(imput))
     z2 = z2.mul(weights)
 
     return z2.sum()
