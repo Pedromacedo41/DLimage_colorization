@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 import numpy as np 
 import argparse
 from matplotlib import pyplot as plt
+from operator import itemgetter
 
 # to transform image to Lab color scale
 from skimage import io, color
@@ -90,6 +91,43 @@ def focal_loss(input, img_ab):
 def plot(im, interp=False):
     f = plt.figure(figsize=(5,10), frameon=True)
     plt.imshow(im, interpolation=None if interp else 'none')
+
+# return list of index of 10 best images colorization and 10 worst images colorizations
+def test(args):
+    batch_size = 1
+    losses = []
+
+    dataset = ImageDataset(args.images)
+    dataloader = DataLoader(dataset, batch_size, False, num_workers=16)
+
+    model = colorization_deploy_v1(T=0.38)
+    model = nn.DataParallel(model, range(3), 3)
+    model = gpu(model)
+    
+   
+    n_data = len(dataloader.dataset)
+
+    processed = 0
+    i=0
+    for inputs, inputs_ab, classes in dataloader:
+        inputs = gpu(inputs)
+        inputs_ab = inputs_ab.detach()
+        outputs = model(inputs)
+    
+        loss = loss_fn(outputs, inputs_ab, 'cuda:3')
+        losses.append((loss, i))
+
+        processed += inputs.shape[0]
+        print(f'Processed {processed} out of {n_data}: {100*processed/n_data} %')
+        i+=1
+
+    
+    sorted_losses = sorted(losses,key=itemgetter(0))
+
+    list_best = [a[0] for a in sorted_losses[0:10]] 
+    list_worse = [a[0] for a in sorted_losses[-11:-1]] 
+
+    return list_best, list_worse
 
 def train(args, n_epochs=4):
     batch_size = 42
