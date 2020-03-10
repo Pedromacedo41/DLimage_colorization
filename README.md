@@ -1,4 +1,8 @@
+
+![exp](/assets/exp.jfif)
+
 # Image Colorization
+
 
 Pytorch implementation of VGG architecture with 3 different loss functions: L2 norm loss, balanced class cross-entropy loss 
 ([Balanced class cross-entropy loss reference Paper](https://arxiv.org/pdf/1603.08511.pdf)) and custom defined focal loss using the precedent defined loss, implemented end to end.
@@ -31,15 +35,15 @@ In our implementation, the color ab frame output is obtained of the output of a 
 
 ### Link to Datasets
 
-[Sun Images Objects](http://groups.csail.mit.edu/vision/SUN/releases/SUN2012.tar.gz) : Scene benchmark (397 scene categories), tar file (37GB)
-[Sun Images Scenes](http://groups.csail.mit.edu/vision/SUN1old/SUN397.tar) : 16,873 images, tar file (7.3GB)
+- [Sun Images Objects](http://groups.csail.mit.edu/vision/SUN/releases/SUN2012.tar.gz) : Scene benchmark (397 scene categories), tar file (37GB)
+- [Sun Images Scenes](http://groups.csail.mit.edu/vision/SUN1old/SUN397.tar) : 16,873 images, tar file (7.3GB)
 
 
 ### Download trained models:
 
 
-[L2 loss Model](https://storage.googleapis.com/left-shift/model_l2.pt) 
-[Focal loss Model](https://storage.googleapis.com/left-shift/model_l2_focal.pt) 
+- [L2 loss Model](https://storage.googleapis.com/left-shift/model_l2.pt) 
+- [Focal loss Model](https://storage.googleapis.com/left-shift/model_l2_focal.pt) 
 
 ### Link to results drive folder
 
@@ -55,9 +59,9 @@ and real anotations in the file names
 
 ### Reference papers and useful links 
 
-[Colorful Image Colorization, ECCV 2016](http://richzhang.github.io/colorization/)
-[Colorful Image Colorization Paper](https://arxiv.org/pdf/1603.08511.pdf)
-[DeOldify projects](https://github.com/jantic/DeOldify)
+- [Colorful Image Colorization, ECCV 2016](http://richzhang.github.io/colorization/)
+- [Colorful Image Colorization Paper](https://arxiv.org/pdf/1603.08511.pdf)
+- [DeOldify projects](https://github.com/jantic/DeOldify)
 
 
 
