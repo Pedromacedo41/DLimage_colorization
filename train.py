@@ -83,20 +83,26 @@ def train(args, n_epochs=100, load_model=False):
     lr = 1e-4
 
     dataset = ImageDataset(args.images)
-    dataloader = DataLoader(dataset, batch_size, True, num_workers=16, pin_memory=True)
+    dataloader = DataLoader(dataset, batch_size, True, num_workers=16)
 
     if load_model:
-        model = torch.load('model')
+        model = torch.load('base.pt')
+        model = nn.DataParallel(model)
+        model = gpu(model)
+        print('Loaded model')
     else:
         model = colorization_deploy_v1(T=0.38)
         model = nn.DataParallel(model)
         model = gpu(model)
-    
+
+    print(model)
+
+   
     optimizer = torch.optim.Adam(model.parameters(),lr=lr)
 
     n_data = len(dataloader.dataset)
 
-    loss_fn = focal_loss
+    loss_fn = f.mse_loss
 
     for e in range(n_epochs):
         running_loss = 0
@@ -105,6 +111,7 @@ def train(args, n_epochs=100, load_model=False):
             inputs = gpu(inputs)
             inputs_ab = gpu(inputs_ab)
             outputs = model(inputs)
+            outputs = f.interpolate(outputs, scale_factor=4)
             optimizer.zero_grad()
             loss = loss_fn(outputs, inputs_ab)
             loss.backward()
