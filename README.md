@@ -48,7 +48,7 @@ In our implementation, the color ab frame output is obtained of the output of a 
 
 ## Link to Presentation
  
-[Presentation](https://docs.google.com/presentation/d/1bFiRyjH0R1xFo_R_IJFOd3BhUl6sZHinj6vV4ZywLqk/edit#slide=id.p)
+[Presentation](https://github.com/Pedromacedo41/DLimage_colorization/blob/master/presentation.pdf)
 
 
 
