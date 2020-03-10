@@ -23,13 +23,13 @@ The training was parallelized along 3 machines, training time taking about 1h~2h
 python main.py --images <path to images> --mode <train|test> [--new] [--focal]
 ```
 
-In mode train, it will train the model using the images at the given path.
+If `--train` will train the model and save it to `model_l2[_focal].pt`. Otherwise, will test the model and output the best and worst prediction to an `output-<random>` folder.
 
-In mode test, it will output the best and worst predictions of the images.
+If `--new` the model is trained from scratch. Otherwise, it starts from the pre-trained model. Only works for training.
 
-If `--new` the model is trained from scratch. Otherwise, it starts from the pre-trained model.
+If `--focal` the model uses the focal loss. Otherwise, it uses normal L2 loss.
 
-if `--focal` the model uses the focal loss. Otherwise, it uses normal L2 loss.
+To use pre-trained models, download them and put them in the root folder.
 
 ## Reference Archictecture
 
@@ -59,7 +59,6 @@ In our implementation, the color ab frame output is obtained of the output of a 
 
 
 ## Download trained models:
-
 
 - [L2 loss Model](https://storage.googleapis.com/left-shift/model_l2.pt) 
 - [Focal loss Model](https://storage.googleapis.com/left-shift/model_l2_focal.pt) 
