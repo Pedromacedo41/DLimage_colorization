@@ -8,6 +8,8 @@ Pytorch implementation of VGG architecture with 3 different loss functions: L2 n
 ([Balanced class cross-entropy loss reference Paper](https://arxiv.org/pdf/1603.08511.pdf)) and custom defined focal loss using the precedent defined loss, implemented end to end.
 
 ![exp](/assets/exp.jfif) 
+
+
 (ground truth/black and white/prediction)
 
 We present deployed versions of 2 variants: L2 norm loss and focal loss with L2 norm.
@@ -39,8 +41,8 @@ In our implementation, the color ab frame output is obtained of the output of a 
 
 ### Link to Datasets
 
-- [Sun Images Objects](http://groups.csail.mit.edu/vision/SUN/releases/SUN2012.tar.gz) : Scene benchmark (397 scene categories), tar file (37GB)
-- [Sun Images Scenes](http://groups.csail.mit.edu/vision/SUN1old/SUN397.tar) : 16,873 images, tar file (7.3GB)
+- [Sun Images Scenes](http://vision.princeton.edu/projects/2010/SUN/SUN397.tar.gz) : Scene benchmark (397 scene categories), tar file (37GB)
+- [Sun Images Objects](http://groups.csail.mit.edu/vision/SUN/releases/SUN2012.tar.gz) : 16,873 images, tar file (7.3GB)
 
 
 ### Download trained models:
