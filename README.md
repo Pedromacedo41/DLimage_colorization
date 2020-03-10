@@ -88,6 +88,7 @@ and real anotations in the file names
 - pytorch
 - matplotlib 
 - numpy 
+- Pillow
 
 
 ## Folder Structure
