@@ -26,8 +26,8 @@ class ImageDataset(Dataset):
     rgb = transforms.Resize((256,256), Image.BICUBIC)(rgb)
     rgb = np.array(rgb)
     Lab = color.rgb2lab(rgb).astype(np.float32).transpose(2,0,1)
-    l = Lab[0,:,:][np.newaxis, ...]
-    ab = Lab[[1,2],:,:]
+    l = Lab[0,:,:][np.newaxis, ...]/100
+    ab = (Lab[[1,2],:,:]+128)/256
     return (l, ab, _class)
 
   def __len__(self):

@@ -11,10 +11,9 @@ import scipy.ndimage.interpolation as sni
 
 
 class colorization_deploy_v1(nn.Module):
-    def __init__(self, T=0.38, decoding_layer= False):
+    def __init__(self, T=0.38, ab_mode= False):
         super(colorization_deploy_v1, self).__init__()
         self.T= T
-        self.deconding_layer = decoding_layer
 
         self.conv1_1 = nn.Conv2d(1,64, kernel_size=3, stride=1, padding=1)
         self.conv1_2 = nn.Conv2d(64,64, kernel_size=3, stride=2, padding=1)
@@ -46,8 +45,8 @@ class colorization_deploy_v1(nn.Module):
         self.conv8_2 = nn.Conv2d(256,256, kernel_size=3, stride=1, padding=1)
         self.conv8_3 = nn.Conv2d(256,256, kernel_size=3, stride=1, padding=1)
 
-        #self.conv8_313 = nn.Conv2d(256,313, kernel_size=1, stride=1)
-        self.conv_ab = nn.Conv2d(256,2, kernel_size=1, stride=1)
+        # self.conv8_313 = nn.Conv2d(256,313, kernel_size=1, stride=1)
+        self.conv_ab = nn.Conv2d(256, 2, kernel_size=1, stride=1)
 
         self.bn1 = nn.BatchNorm2d(64)
         self.bn2 = nn.BatchNorm2d(128)
@@ -117,8 +116,9 @@ class colorization_deploy_v1(nn.Module):
             nn.ReLU(),
             self.conv8_3,
             nn.ReLU(),
-            self.conv_ab
-            #nn.Upsample(scale_factor=4, mode='nearest')
+            self.conv_ab,
+
+            nn.Upsample(scale_factor=4, mode='bicubic')
         )
 
     def forward(self, input):
