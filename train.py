@@ -56,11 +56,8 @@ def loss_fn(imput, img_ab, device='cpu:0'):
 
     return z2.sum()
 
-def logist_mask(relative_loss):
-    """
-    relative_loss = pixel_loss / max_loss (<= 1)
-    """
-    return 1 / (1 + 20 * torch.exp(-15 * relative_loss))
+def logist_mask(x):
+    return torch.sigmoid(40*(x-.5))
 
 def focal_loss(_input, input_ab):
     output = f.mse_loss(_input, input_ab)
