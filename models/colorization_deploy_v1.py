@@ -134,9 +134,7 @@ class colorization_deploy_v1(nn.Module):
         input_l = input_l.squeeze(0).cpu()
         lab = np.concatenate((input_l, pred_ab), axis=0)
         lab = lab.transpose((1,2,0))
-        print(lab)
         rgb = color.lab2rgb(lab)
-        print(rgb)
         return rgb
         #img_lab = color.rgb2lab(input) # convert image to lab color space
         #img_l = img_lab[:,:,0] # pull out L channel
