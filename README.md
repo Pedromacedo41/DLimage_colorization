@@ -1,8 +1,7 @@
 
-![exp](/assets/exp.jfif)
+<center> ![exp](/assets/exp.jfif) </center>
 
 # Image Colorization
-
 
 Pytorch implementation of VGG architecture with 3 different loss functions: L2 norm loss, balanced class cross-entropy loss 
 ([Balanced class cross-entropy loss reference Paper](https://arxiv.org/pdf/1603.08511.pdf)) and custom defined focal loss using the precedent defined loss, implemented end to end.
