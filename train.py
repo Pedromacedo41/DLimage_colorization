@@ -83,35 +83,47 @@ def plot(im, interp=False):
 
 # return list of index of 10 best images colorization and 10 worst images colorizations
 def test(model, dataloader):
-    batch_size = 1
-    losses = []
+    with torch.no_grad():
+        batch_size = 1
+        losses = []
 
-    model = nn.DataParallel(model, range(3), 3)
-    model = gpu(model)
-    
-    n_data = len(dataloader.dataset)
+        dataset = ImageDataset(args.images)
+        dataloader = DataLoader(dataset, batch_size, False, num_workers=16)
 
-    processed = 0
-    i=0
-    for inputs, inputs_ab, classes in dataloader:
-        inputs = gpu(inputs)
-        inputs_ab = inputs_ab.detach()
-        outputs = model(inputs)
-    
-        loss = loss_fn(outputs, inputs_ab, 'cuda:3')
-        losses.append((loss, i))
+        model = colorization_deploy_v1(T=0.38)
 
-        processed += inputs.shape[0]
-        print(f'Processed {processed} out of {n_data}: {100*processed/n_data} %')
-        i+=1
+        if load_model:
+            model.load_state_dict(torch.load('model_l2.pt'))
 
-    
-    sorted_losses = sorted(losses,key=itemgetter(0))
+        model.eval()
+        
+        model = nn.DataParallel(model)
+        model = gpu(model)
 
-    list_best = [a[0] for a in sorted_losses[0:10]] 
-    list_worse = [a[0] for a in sorted_losses[-11:-1]] 
+        n_data = len(dataloader.dataset)
 
-    return list_best, list_worse
+        processed = 0
+        i=0
+        for inputs, inputs_ab, classes in dataloader:
+
+            inputs = gpu(inputs)
+            inputs_ab = inputs_ab.detach()
+            outputs = model(inputs)
+        
+            loss = loss_fn(outputs, inputs_ab)
+            losses.append((loss.item(), i))
+
+            processed += inputs.shape[0]
+            print(f'Processed {processed} out of {n_data}: {100*processed/n_data} %')
+            i+=1
+
+        
+        sorted_losses = sorted(losses,key=itemgetter(0))
+
+        list_best = [a[0] for a in sorted_losses[0:10]] 
+        list_worse = [a[0] for a in sorted_losses[-11:-1]] 
+
+        return list_best, list_worse
 
 def train(args, n_epochs=100, load_model=False):
     batch_size = 224
@@ -173,5 +185,6 @@ def main():
 if __name__ == '__main__': 
     #torch.autograd.set_detect_anomaly(True)
     args = parse_args()
-    train(args, load_model=True)
+    #train(args, load_model=True)
+    print(test(args))
 
