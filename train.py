@@ -94,13 +94,14 @@ def train(args, n_epochs=100, load_model=False):
     dataset = ImageDataset(args.images)
     dataloader = DataLoader(dataset, batch_size, True, num_workers=16, pin_memory=True)
 
+    model = colorization_deploy_v1(T=0.38)
+
     if load_model:
-        model = torch.load('model')
-    else:
-        model = colorization_deploy_v1(T=0.38)
-        model = nn.DataParallel(model)
-        model = gpu(model)
+        model.load_state_dict(torch.load('model_l2.pt'))
     
+    model = nn.DataParallel(model)
+    model = gpu(model)
+
     optimizer = torch.optim.Adam(model.parameters(),lr=lr)
 
     n_data = len(dataloader.dataset)
@@ -121,13 +122,13 @@ def train(args, n_epochs=100, load_model=False):
             running_loss+=loss.item()
             processed += inputs.shape[0]
             #print(f'Loss: {loss.item()}')
-            print(f'Processed {processed} out of {n_data}: {100*processed/n_data} %')
+            #print(f'Processed {processed} out of {n_data}: {100*processed/n_data} %')
         print(f'Epoch: {e}\nMean loss: {running_loss}\n')
         try:
-            os.replace('model', 'model_prev')
+            os.replace('model_l2.pt', 'model_l2_prev.pt')
         except:
             pass
-        torch.save(model, 'model')
+        torch.save(model.module.state_dict(), 'model_l2.pt')
 
 
 def main():
@@ -144,7 +145,11 @@ def main():
 
 
 if __name__ == '__main__': 
-    # torch.autograd.set_detect_anomaly(True)
-    args = parse_args()
-    train(args, load_model=True)
+    #torch.autograd.set_detect_anomaly(True)
+    #args = parse_args()
+    #train(args, load_model=True)
+    modules = list(model.children())[:-1]
+    model = nn.Sequential(*modules)
+    print(modules)
+    #torch.save(model.module.state_dict(), 'model_l2.pt')
 

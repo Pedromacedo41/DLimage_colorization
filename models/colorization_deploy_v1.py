@@ -117,7 +117,7 @@ class colorization_deploy_v1(nn.Module):
 
             self.conv_ab,
 
-            nn.Upsample(scale_factor=4, mode='nearest')
+            nn.Upsample(scale_factor=4, mode='bicubic')
         )
 
        
