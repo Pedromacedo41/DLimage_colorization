@@ -29,7 +29,7 @@ If `--new` the model is trained from scratch. Otherwise, it starts from the pre-
 
 If `--focal` the model uses the focal loss. Otherwise, it uses normal L2 loss.
 
-To use pre-trained models, download them and put them in the root folder.
+To use pre-trained models, [download](#download-trained-models) them and put them in the root folder.
 
 ## Reference Archictecture
 
@@ -48,7 +48,7 @@ In our implementation, the color ab frame output is obtained of the output of a 
 
 ## Link to Presentation
  
-[Presentation](https://github.com/Pedromacedo41/DLimage_colorization/blob/master/presentation.pdf)
+[Presentation](presentation.pdf)
 
 
 
