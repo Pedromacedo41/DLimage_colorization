@@ -44,8 +44,8 @@ class colorization_deploy_v1(nn.Module):
         self.conv8_2 = nn.Conv2d(256,256, kernel_size=3, stride=1, padding=1)
         self.conv8_3 = nn.Conv2d(256,256, kernel_size=3, stride=1, padding=1)
 
-        self.conv8_313 = nn.Conv2d(256,313, kernel_size=1, stride=1)
-        self.conv_ab = nn.Conv2d(313,2, kernel_size=1, stride=1)
+        #self.conv8_313 = nn.Conv2d(256,313, kernel_size=1, stride=1)
+        self.conv_ab = nn.Conv2d(256,2, kernel_size=1, stride=1)
 
         self.bn1 = nn.BatchNorm2d(64)
         self.bn2 = nn.BatchNorm2d(128)
@@ -115,27 +115,122 @@ class colorization_deploy_v1(nn.Module):
             nn.ReLU(),
             self.conv8_3,
             nn.ReLU(),
-
-            self.conv8_313,
-
-            nn.Upsample(scale_factor=4, mode='nearest')
-
+            self.conv_ab
+            #nn.Upsample(scale_factor=4, mode='nearest')
         )
 
-       
-
     def forward(self, input):
-        out = F.softmax(self.lin(input), dim=1)
-        if(self.deconding_layer==True):
-            return self.conv_ab(out)
-        else:
-            return out
+        return self.lin(input)
+    
+    def predict(self, input):
+        img_lab = color.rgb2lab(img_rgb) # convert image to lab color space
+        img_l = img_lab[:,:,0] # pull out L channel
+        (H_orig,W_orig) = img_rgb.size[:2] # original image size
 
- 
+    def fill_weights(self):
+        model = torch.load("colorization_release_v1.caffemodel.pt")
 
- 
+        self.conv8_1.weight = nn.Parameter(model["conv8_1.weight"])
+        self.conv8_1.bias = nn.Parameter(model["conv8_1.bias"])
+
+        self.conv8_2.weight = nn.Parameter(model["conv8_2.weight"])
+        self.conv8_2.bias = nn.Parameter(model["conv8_2.bias"])
+
+        self.conv8_3.weight = nn.Parameter(model["conv8_3.weight"])
+        self.conv8_3.bias = nn.Parameter(model["conv8_3.bias"])
+
+        self.conv7_1.weight = nn.Parameter(model["conv7_1.weight"])
+        self.conv7_1.bias = nn.Parameter(model["conv7_1.bias"])
+
+        self.conv7_2.weight = nn.Parameter(model["conv7_2.weight"])
+        self.conv7_2.bias = nn.Parameter(model["conv7_2.bias"])
+
+        self.conv7_3.weight = nn.Parameter(model["conv7_3.weight"])
+        self.conv7_3.bias = nn.Parameter(model["conv7_3.bias"])
+
+        self.bn7.weight = nn.Parameter(model["conv7_3norm.weight"])
+        self.bn7.bias = nn.Parameter(model["conv7_3norm.bias"])
+        #6
+        self.conv6_1.weight = nn.Parameter(model["conv6_1.weight"])
+        self.conv6_1.bias = nn.Parameter(model["conv6_1.bias"])
+
+        self.conv6_2.weight = nn.Parameter(model["conv6_2.weight"])
+        self.conv6_2.bias = nn.Parameter(model["conv6_2.bias"])
+
+        self.conv6_3.weight = nn.Parameter(model["conv6_3.weight"])
+        self.conv6_3.bias = nn.Parameter(model["conv6_3.bias"])
+
+        self.bn6.weight = nn.Parameter(model["conv6_3norm.weight"])
+        self.bn6.bias = nn.Parameter(model["conv6_3norm.bias"])
+        #5
+        self.conv5_1.weight = nn.Parameter(model["conv5_1.weight"])
+        self.conv5_1.bias = nn.Parameter(model["conv5_1.bias"])
+
+        self.conv5_2.weight = nn.Parameter(model["conv5_2.weight"])
+        self.conv5_2.bias = nn.Parameter(model["conv5_2.bias"])
+
+        self.conv5_3.weight = nn.Parameter(model["conv5_3.weight"])
+        self.conv5_3.bias = nn.Parameter(model["conv5_3.bias"])
+
+        self.bn5.weight = nn.Parameter(model["conv5_3norm.weight"])
+        self.bn5.bias = nn.Parameter(model["conv5_3norm.bias"])
+        #4
+        self.conv4_1.weight = nn.Parameter(model["conv4_1.weight"])
+        self.conv4_1.bias = nn.Parameter(model["conv4_1.bias"])
+
+        self.conv4_2.weight = nn.Parameter(model["conv4_2.weight"])
+        self.conv4_2.bias = nn.Parameter(model["conv4_2.bias"])
+
+        self.conv4_3.weight = nn.Parameter(model["conv4_3.weight"])
+        self.conv4_3.bias = nn.Parameter(model["conv4_3.bias"])
+
+        self.bn4.weight = nn.Parameter(model["conv4_3norm.weight"])
+        self.bn4.bias = nn.Parameter(model["conv4_3norm.bias"])
+
+        #3
+        self.conv3_1.weight = nn.Parameter(model["conv3_1.weight"])
+        self.conv3_1.bias = nn.Parameter(model["conv3_1.bias"])
+
+        self.conv3_2.weight = nn.Parameter(model["conv3_2.weight"])
+        self.conv3_2.bias = nn.Parameter(model["conv3_2.bias"])
+
+        self.conv3_3.weight = nn.Parameter(model["conv3_3.weight"])
+        self.conv3_3.bias = nn.Parameter(model["conv3_3.bias"])
+
+        self.bn3.weight = nn.Parameter(model["conv3_3norm.weight"])
+        self.bn3.bias = nn.Parameter(model["conv3_3norm.bias"])
+        
+        #2
+        self.conv2_1.weight = nn.Parameter(model["conv2_1.weight"])
+        self.conv2_1.bias = nn.Parameter(model["conv2_1.bias"])
+
+        self.conv2_2.weight = nn.Parameter(model["conv2_2.weight"])
+        self.conv2_2.bias = nn.Parameter(model["conv2_2.bias"])
+
+
+        self.bn2.weight = nn.Parameter(model["conv2_2norm.weight"])
+        self.bn2.bias = nn.Parameter(model["conv2_2norm.bias"])
+
+        #1
+        self.conv1_1.weight = nn.Parameter(model["bw_conv1_1.weight"])
+        self.conv1_1.bias = nn.Parameter(model["bw_conv1_1.bias"])
+
+        self.conv1_2.weight = nn.Parameter(model["conv1_2.weight"])
+        self.conv1_2.bias = nn.Parameter(model["conv1_2.bias"])
+
+
+        self.bn1.weight = nn.Parameter(model["conv1_2norm.weight"])
+        self.bn1.bias = nn.Parameter(model["conv1_2norm.bias"])
+
+        #print(model["class8_ab.weights"].shape)
+        self.conv_ab.weight = nn.Parameter(torch.rand([2, 256, 1, 1]))
+        self.conv_ab.bias = nn.Parameter(torch.rand([2]))
+
+
 if __name__ == '__main__': 
-    net = colorization_deploy_v1()
+    net = colorization_deploy_v1(decoding_layer=True)
     t = net(torch.ones([1,1,224,224]))
+    net.fill_weights()
+    torch.save(net, "base.pt")
     # print(t)
-    print(t.shape)
+    #print(t.shape)
