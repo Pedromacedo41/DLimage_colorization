@@ -1,6 +1,7 @@
 import os
 import torch
 import torch.nn as nn
+import torch.nn.functional as f
 from torch.utils.data import DataLoader
 import numpy as np 
 import argparse
@@ -61,31 +62,21 @@ def logist_mask(relative_loss):
     """
     return 1 / (1 + 20 * torch.exp(-15 * relative_loss))
 
-def focal_loss(input, img_ab):
-    gpu(imput)
-    d2 = torch.tensor(nnenc.encode_points_mtx_nd(img_ab), dtype= torch.float32)
-    # dimension 1 x 224 x 224
-    gpu(d2)
-    weights = priors.compute(imput)
- 
-    z2 = torch.sum(-imput.log().mul(d2), dim=1)
-    gpu(z2)
-    z2 = z2.mul(weights)
+def focal_loss(_input, input_ab):
+    output = f.mse_loss(_input, input_ab)
 
     # Max pixel loss
-    max_ = torch.max(z2)
+    max_ = torch.max(output)
 
-    # Copy z2 to a new tensor
-    Rel_loss = z2.clone()
-    Rel_loss.requires_grad_(False)
-
-    Rel_loss = Rel_loss / max_
+    # Compute relative loss
+    aux = output.detach()
+    aux = aux / max_
 
     # Mask
-    mask_ = logist_mask(Rel_loss)
-    z2 = z2.mul(mask_.data)
+    aux = logist_mask(aux)
+    output = output.mul(aux)
 
-    return z2.sum()
+    return output.sum()/aux.sum()
 
 def train(args, n_epochs=100, load_model=False):
     batch_size = 224
@@ -106,7 +97,7 @@ def train(args, n_epochs=100, load_model=False):
 
     n_data = len(dataloader.dataset)
 
-    loss_fn = nn.MSELoss()
+    loss_fn = focal_loss
 
     for e in range(n_epochs):
         running_loss = 0
