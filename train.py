@@ -93,18 +93,16 @@ def plot(im, interp=False):
     plt.imshow(im, interpolation=None if interp else 'none')
 
 # return list of index of 10 best images colorization and 10 worst images colorizations
-def test(args):
+def test(args, model):
     batch_size = 1
     losses = []
 
     dataset = ImageDataset(args.images)
     dataloader = DataLoader(dataset, batch_size, False, num_workers=16)
 
-    model = colorization_deploy_v1(T=0.38)
     model = nn.DataParallel(model, range(3), 3)
     model = gpu(model)
     
-   
     n_data = len(dataloader.dataset)
 
     processed = 0
