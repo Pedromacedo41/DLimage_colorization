@@ -146,10 +146,6 @@ def main():
 
 if __name__ == '__main__': 
     #torch.autograd.set_detect_anomaly(True)
-    #args = parse_args()
-    #train(args, load_model=True)
-    modules = list(model.children())[:-1]
-    model = nn.Sequential(*modules)
-    print(modules)
-    #torch.save(model.module.state_dict(), 'model_l2.pt')
+    args = parse_args()
+    train(args, load_model=True)
 
