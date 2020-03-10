@@ -1,4 +1,5 @@
 import os
+import secrets
 import torch
 import torch.nn as nn
 import torch.nn.functional as f
@@ -83,6 +84,14 @@ def plot(im, interp=False):
 
 # return list of index of 10 best images colorization and 10 worst images colorizations
 def test(args):
+
+    folder = f'output-{secrets.token_hex(4)}'
+    print(folder)
+
+    os.makedirs(folder)
+    os.makedirs(f'{folder}/best')
+    os.makedirs(f'{folder}/worst')
+
     with torch.no_grad():
         batch_size = 224
         losses = []
@@ -116,24 +125,32 @@ def test(args):
             processed += inputs.shape[0]
             print(f'Processed {processed} out of {n_data}: {100*processed/n_data} %')
 
+        # for i in range(10):
+        #     im, real = dataset.get_img(i)
+        #     im = gpu(im)
+        #     im = model.predict_rgb(im)
+        #     io.imsave(f'scenes/rand/{i}_pred.png', im)
+        #     io.imsave(f'scenes/rand/{i}_real.png', real)
+
         sorted_losses = sorted(losses,key=itemgetter(0))
 
-        list_best = [a[1] for a in sorted_losses[0:10]] 
-        list_worst = [a[1] for a in sorted_losses[-11:-1]] 
+        list_best = [a[1] for a in sorted_losses[0:50]] 
+        list_worst = [a[1] for a in sorted_losses[-51:-1]] 
+
 
         for i in list_best:
             im, real = dataset.get_img(i)
             im = gpu(im)
-            im = model.predict_rgb(im)
-            io.imsave(f'output/best/{i}_pred.png', im)
-            io.imsave(f'output/best/{i}_real.png', real)
+            im = model.module.predict_rgb(im)
+            io.imsave(f'{folder}/best/{i}_pred.png', im)
+            io.imsave(f'{folder}/best/{i}_real.png', real)
 
         for i in list_worst:
             im, real = dataset.get_img(i)
             im = gpu(im)
-            im = model.predict_rgb(im)
-            io.imsave(f'output/worst/{i}_pred.png', im)
-            io.imsave(f'output/worst/{i}_real.png', real)
+            im = model.module.predict_rgb(im)
+            io.imsave(f'{folder}/worst/{i}_pred.png', im)
+            io.imsave(f'{folder}/worst/{i}_real.png', real)
 
 
 def train(args, n_epochs=100, load_model=False):
