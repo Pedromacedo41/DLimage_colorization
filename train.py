@@ -126,7 +126,7 @@ def test(model):
         return list_best, list_worse
 
 def train(args, n_epochs=100, load_model=False):
-    batch_size = 32
+    batch_size = 224
     lr = 1e-4
 
     dataset = ImageDataset(args.images)
@@ -135,9 +135,9 @@ def train(args, n_epochs=100, load_model=False):
     model = colorization_deploy_v1(T=0.38)
 
     if load_model:
-        model.load_state_dict(torch.load('model_l2.pt'))
+        model.load_state_dict(torch.load('model_l2_focal.pt'))
     
-    #model = nn.DataParallel(model)
+    model = nn.DataParallel(model)
     model = gpu(model)
 
     optimizer = torch.optim.Adam(model.parameters(),lr=lr)
@@ -163,10 +163,10 @@ def train(args, n_epochs=100, load_model=False):
             #print(f'Processed {processed} out of {n_data}: {100*processed/n_data} %')
         print(f'Epoch: {e}\nMean loss: {running_loss}\n')
         try:
-            os.replace('model_l2.pt', 'model_l2_prev.pt')
+            os.replace('model_l2_focal.pt', 'model_l2_focal_prev.pt')
         except:
             pass
-        torch.save(model.module.state_dict(), 'model_l2.pt')
+        torch.save(model.module.state_dict(), 'model_l2_focal.pt')
 
 
 def main():
