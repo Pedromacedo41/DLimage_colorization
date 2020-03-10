@@ -20,7 +20,10 @@ from utils.data import ImageDataset
 
 def parse_args():
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--images', default='images', type=str)
+    parser.add_argument('--images', default=None, required=True, type=str)
+    parser.add_argument('--mode', default=None, required=True, type=str)
+    parser.add_argument('--new', action='store_false')
+    parser.add_argument('--focal', action='store_false')
 
     args = parser.parse_args()
     return args
@@ -34,35 +37,35 @@ def gpu(tensor, gpu=use_gpu, device=None):
         return tensor
 
 
-sigma = 5
-nb_neighboors = 10
-ENC_DIR = './utils/'
+# sigma = 5
+# nb_neighboors = 10
+# ENC_DIR = './utils/'
 
 # encoder_decoder ab to Q space
-nnenc = NNEncode(nb_neighboors,sigma,km_filepath=os.path.join(ENC_DIR,'pts_in_hull.npy'))
+# nnenc = NNEncode(nb_neighboors,sigma,km_filepath=os.path.join(ENC_DIR,'pts_in_hull.npy'))
 
 # weights for balanced loss
-priors = PriorFactor(1, gamma= 0.5, priorFile=os.path.join(ENC_DIR,'prior_probs.npy'))
+# priors = PriorFactor(1, gamma= 0.5, priorFile=os.path.join(ENC_DIR,'prior_probs.npy'))
 
 
-def loss_fn(imput, img_ab, device='cpu:0'):
-    #d2 = gpu(torch.tensor(nnenc.encode_points_mtx_nd(img_ab.numpy()), dtype= torch.float32))
-    d2 = torch.tensor(nnenc.encode_points_mtx_nd(img_ab.numpy()), dtype= torch.float32).to(device)
+# def loss_fn(imput, img_ab, device='cpu:0'):
+#     #d2 = gpu(torch.tensor(nnenc.encode_points_mtx_nd(img_ab.numpy()), dtype= torch.float32))
+#     d2 = torch.tensor(nnenc.encode_points_mtx_nd(img_ab.numpy()), dtype= torch.float32).to(device)
  
-    z2 = -imput.log()
-    del d2
+#     z2 = -imput.log()
+#     del d2
 
-    z2 = torch.sum(z2, dim=1)
+#     z2 = torch.sum(z2, dim=1)
 
-    weights = priors.compute(imput).to(device)
-    z2 = z2.mul(weights)
+#     weights = priors.compute(imput).to(device)
+#     z2 = z2.mul(weights)
 
-    return z2.sum()
+#     return z2.sum()
 
 def logist_mask(x):
     return torch.sigmoid(40*(x-.5))
 
-def focal_loss(_input, input_ab):
+def focal_loss(_input, input_ab, reduction='mean'):
     output = f.mse_loss(_input, input_ab, reduction='none')
 
     # Max pixel loss
@@ -76,7 +79,15 @@ def focal_loss(_input, input_ab):
     aux = logist_mask(aux)
     output = output.mul(aux)
 
-    return output.sum()/aux.sum()
+    if reduction=='mean':
+        return output.sum()/aux.sum()
+    elif reduction == 'sum':
+        return output.sum()
+    elif reduction == 'none':
+        return output
+    else:
+        raise 'Invalid mode'
+
 
 def plot(im, interp=False):
     f = plt.figure(figsize=(5,10), frameon=True)
@@ -92,6 +103,11 @@ def test(args):
     os.makedirs(f'{folder}/best')
     os.makedirs(f'{folder}/worst')
 
+    if args.focal:
+        loss_fn = focal_loss
+    else:
+        loss_fn = f.mse_loss
+
     with torch.no_grad():
         batch_size = 224
         losses = []
@@ -100,7 +116,12 @@ def test(args):
         dataloader = DataLoader(dataset, batch_size, False, num_workers=16)
 
         model = colorization_deploy_v1(T=0.38)
-        model.load_state_dict(torch.load('model_l2.pt'))
+
+        if args.focal:
+            model.load_state_dict(torch.load('model_l2_focal.pt'))
+        else:
+            model.load_state_dict(torch.load('model_l2.pt'))
+
         model.eval()
         model = nn.DataParallel(model)
         model = gpu(model)
@@ -154,6 +175,11 @@ def test(args):
 
 
 def train(args, n_epochs=100, load_model=False):
+    if args.focal:
+        loss_fn = focal_loss
+    else:
+        loss_fn = f.mse_loss
+
     batch_size = 224
     lr = 1e-4
 
@@ -163,7 +189,10 @@ def train(args, n_epochs=100, load_model=False):
     model = colorization_deploy_v1(T=0.38)
 
     if load_model:
-        model.load_state_dict(torch.load('model_l2_focal.pt'))
+        if args.focal:
+            model.load_state_dict(torch.load('model_l2_focal.pt'))
+        else:
+            model.load_state_dict(torch.load('model_l2.pt'))
     
     model = nn.DataParallel(model)
     model = gpu(model)
@@ -171,8 +200,6 @@ def train(args, n_epochs=100, load_model=False):
     optimizer = torch.optim.Adam(model.parameters(),lr=lr)
 
     n_data = len(dataloader.dataset)
-
-    loss_fn = focal_loss
 
     for e in range(n_epochs):
         running_loss = 0
@@ -198,21 +225,15 @@ def train(args, n_epochs=100, load_model=False):
 
 
 def main():
-
-    net = colorization_deploy_v1(T=0.38)
-    optimizer = torch.optim.Adam(net.parameters(),lr=1e-4)
-
-    img_ab = torch.ones((3,2,224,224))
-    output = net(torch.ones([3,1,224,224]))
-
-    gpu(output)
-
-    print(loss_fn(output, img_ab))
+    args = parse_args()
+    if(args.mode == 'train'):
+        train(args, load_model = not args.new)
+    elif args.mode == 'test':
+        test(args)
+    else:
+        print('Invalid mode')
 
 
 if __name__ == '__main__': 
-    #torch.autograd.set_detect_anomaly(True)
-    args = parse_args()
-    #train(args, load_model=True)
-    test(args)
+    main()
 

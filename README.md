@@ -17,8 +17,21 @@ The models were trained in google cloud, using VM instances of specificaions: n1
 
 The training was parallelized along 3 machines, training time taking about 1h~2h of average each.
 
+## Running
 
-### Reference Archictecture
+```
+python main.py --images <path to images> --mode <train|test> [--new] [--focal]
+```
+
+In mode train, it will train the model using the images at the given path.
+
+In mode test, it will output the best and worst predictions of the images.
+
+If `--new` the model is trained from scratch. Otherwise, it starts from the pre-trained model.
+
+if `--focal` the model uses the focal loss. Otherwise, it uses normal L2 loss.
+
+## Reference Archictecture
 
 The balanced class cross-entropy architecture is showed bellow, according to [Balanced class cross-entropy loss reference Paper](https://arxiv.org/pdf/1603.08511.pdf)
 
@@ -33,25 +46,25 @@ In our implementation, the color ab frame output is obtained of the output of a 
 ![architecture3](/assets/arch2.jpeg)
 
 
-### Link to Presentation
+## Link to Presentation
  
 [Presentation](https://docs.google.com/presentation/d/1bFiRyjH0R1xFo_R_IJFOd3BhUl6sZHinj6vV4ZywLqk/edit#slide=id.p)
 
 
 
-### Link to Datasets
+## Link to Datasets
 
 - [Sun Images Scenes](http://vision.princeton.edu/projects/2010/SUN/SUN397.tar.gz) : Scene benchmark (397 scene categories), tar file (37GB)
 - [Sun Images Objects](http://groups.csail.mit.edu/vision/SUN/releases/SUN2012.tar.gz) : 16,873 images, tar file (7.3GB)
 
 
-### Download trained models:
+## Download trained models:
 
 
 - [L2 loss Model](https://storage.googleapis.com/left-shift/model_l2.pt) 
 - [Focal loss Model](https://storage.googleapis.com/left-shift/model_l2_focal.pt) 
 
-### Link to results drive folder
+## Link to results drive folder
 
 For each model we tested our model against Sun Images Objects Dataset(training dataset, 16,873 images) and Sun Images Scenes (37GB) and selected the best and worst results,
 based in the model loss after training.
@@ -63,7 +76,7 @@ and real anotations in the file names
 
 
 
-### Reference papers and useful links 
+## Reference papers and useful links 
 
 - [Colorful Image Colorization, ECCV 2016](http://richzhang.github.io/colorization/)
 - [Colorful Image Colorization Paper](https://arxiv.org/pdf/1603.08511.pdf)
@@ -72,7 +85,7 @@ and real anotations in the file names
 
 
 
-### Dependencies
+## Dependencies
 
 - scikit-image
 - pytorch
@@ -80,7 +93,7 @@ and real anotations in the file names
 - numpy 
 
 
-### Folder Structure
+## Folder Structure
 
 ![folder structure](/assets/structure.jpeg)
 
