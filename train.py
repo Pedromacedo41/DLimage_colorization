@@ -96,9 +96,10 @@ def test(args):
         #model = nn.DataParallel(model)
         model = gpu(model)
 
-        im = gpu(torch.from_numpy(dataloader.dataset[0][0]).unsqueeze(0))
+        im, real = dataset.get_img(0)
         im = model.predict_rgb(im)
-        io.imsave('image.png', im)
+        io.imsave('pred.png', im)
+        io.imsave('real.png', im)
         return
 
         n_data = len(dataloader.dataset)
