@@ -59,9 +59,7 @@ In our implementation, the color ab frame output is obtained of the output of a 
 
 
 ## Download trained models:
-
-- [L2 loss Model](https://storage.googleapis.com/left-shift/model_l2.pt) 
-- [Focal loss Model](https://storage.googleapis.com/left-shift/model_l2_focal.pt) 
+- [Drive](https://drive.google.com/drive/folders/1QOLfamHMK9Ond7sVJlLGrf7eh1OFC1Vi?usp=sharing)
 
 ## Link to results drive folder
 
