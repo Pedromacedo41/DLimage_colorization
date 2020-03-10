@@ -93,8 +93,13 @@ def test(args):
         model = colorization_deploy_v1(T=0.38)
         model.load_state_dict(torch.load('model_l2.pt'))
         model.eval()
-        model = nn.DataParallel(model)
+        #model = nn.DataParallel(model)
         model = gpu(model)
+
+        im = gpu(torch.from_numpy(dataloader.dataset[0][0]).unsqueeze(0))
+        im = model.predict_rgb(im)
+        io.imsave('image.png', im)
+        return
 
         n_data = len(dataloader.dataset)
 
@@ -121,8 +126,8 @@ def test(args):
         list_best = [a[1] for a in sorted_losses[0:10]] 
         list_worse = [a[1] for a in sorted_losses[-11:-1]] 
 
-        print(list_best) 
-        print(list_worse)
+        #print(list_best) 
+        #print(list_worse)
 
         return list_best, list_worse
 
@@ -187,5 +192,5 @@ if __name__ == '__main__':
     #torch.autograd.set_detect_anomaly(True)
     args = parse_args()
     #train(args, load_model=True)
-    test(args)
+    best, worst = test(args)
 

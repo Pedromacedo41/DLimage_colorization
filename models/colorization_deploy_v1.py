@@ -123,22 +123,35 @@ class colorization_deploy_v1(nn.Module):
 
     def forward(self, input):
         return self.lin(input)
+
+    def lab2rgb(self, input_l, input_ab):
+        lab = np.concatenate
     
-    def predict(self, input):
-        img_lab = color.rgb2lab(input) # convert image to lab color space
-        img_l = img_lab[:,:,0] # pull out L channel
-        # (H_orig,W_orig) = input.size[:2] # original image size
-        mean_img_l = torch.as_tensor(img_l-50, dtype=torch.float32)
-        mean_img_l.unsqueeze_(0).unsqueeze_(0)
-        pred_ab = self.forward(mean_img_l).squeeze(0)
-        d = pred_ab.detach().numpy().transpose((1, 2, 0))
-        # upsample to match size of original image L
-        ab_dec_us = sni.zoom(d, (4, 4, 1))
-        # concatenate with original image L
-        img_lab_out = np.concatenate((img_l[:, :, np.newaxis], ab_dec_us), axis=2)
-        img_rgb_out = np.clip(color.lab2rgb(256*img_lab_out-128),
-                              0, 1)  # convert back to rgb
-        return img_rgb_out
+    def predict_rgb(self, input_l):
+        pred_ab = self.forward(input_l)*256 - 128
+        input_l *= 100
+        pred_ab = pred_ab.squeeze(0).cpu()
+        input_l = input_l.squeeze(0).cpu()
+        lab = np.concatenate((input_l, pred_ab), axis=0)
+        lab = lab.transpose((1,2,0))
+        print(lab)
+        rgb = color.lab2rgb(lab)
+        print(rgb)
+        return rgb
+        #img_lab = color.rgb2lab(input) # convert image to lab color space
+        #img_l = img_lab[:,:,0] # pull out L channel
+        ## (H_orig,W_orig) = input.size[:2] # original image size
+        #mean_img_l = torch.as_tensor(img_l-50, dtype=torch.float32)
+        #mean_img_l.unsqueeze_(0).unsqueeze_(0)
+        #pred_ab = self.forward(mean_img_l).squeeze(0)
+        #d = pred_ab.detach().numpy().transpose((1, 2, 0))
+        ## upsample to match size of original image L
+        #ab_dec_us = sni.zoom(d, (4, 4, 1))
+        ## concatenate with original image L
+        #img_lab_out = np.concatenate((img_l[:, :, np.newaxis], ab_dec_us), axis=2)
+        #img_rgb_out = np.clip(color.lab2rgb(256*img_lab_out-128),
+        #                      0, 1)  # convert back to rgb
+        #return img_rgb_out
         
 
     def fill_weights(self):
