@@ -20,7 +20,7 @@ The training was parallelized along 3 machines, training time taking about 1h~2h
 ## Running
 
 ```
-python main.py --images <path to images> --mode <train|test> [--new] [--focal]
+python main.py --images <path to images> [--train] [--new] [--focal]
 ```
 
 If `--train` will train the model and save it to `model_l2[_focal].pt`. Otherwise, will test the model and output the best and worst prediction to an `output-<random>` folder.
