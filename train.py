@@ -1,4 +1,5 @@
 import os
+import secrets
 import torch
 import torch.nn as nn
 import torch.nn.functional as f
@@ -83,6 +84,14 @@ def plot(im, interp=False):
 
 # return list of index of 10 best images colorization and 10 worst images colorizations
 def test(args):
+
+    folder = f'output-{secrets.token_hex(4)}'
+    print(folder)
+
+    os.makedirs(folder)
+    os.makedirs(f'{folder}/best')
+    os.makedirs(f'{folder}/worst')
+
     with torch.no_grad():
         batch_size = 224
         losses = []
@@ -128,19 +137,20 @@ def test(args):
         list_best = [a[1] for a in sorted_losses[0:50]] 
         list_worst = [a[1] for a in sorted_losses[-51:-1]] 
 
+
         for i in list_best:
             im, real = dataset.get_img(i)
             im = gpu(im)
             im = model.module.predict_rgb(im)
-            io.imsave(f'output/best/{i}_pred.png', im)
-            io.imsave(f'output/best/{i}_real.png', real)
+            io.imsave(f'{folder}/best/{i}_pred.png', im)
+            io.imsave(f'{folder}/best/{i}_real.png', real)
 
         for i in list_worst:
             im, real = dataset.get_img(i)
             im = gpu(im)
             im = model.module.predict_rgb(im)
-            io.imsave(f'output/worst/{i}_pred.png', im)
-            io.imsave(f'output/worst/{i}_real.png', real)
+            io.imsave(f'{folder}/worst/{i}_pred.png', im)
+            io.imsave(f'{folder}/worst/{i}_real.png', real)
 
 
 def train(args, n_epochs=100, load_model=False):
