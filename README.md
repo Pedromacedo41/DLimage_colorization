@@ -13,14 +13,14 @@ The training was parallelized along 3 machines, training time taking about 1h~2h
 The balanced class cross-entropy architecture is showed bellow, according to [Balanced class cross-entropy loss reference Paper](https://arxiv.org/pdf/1603.08511.pdf)
 
 ![architecture](/assets/ach.png)
-![architecture](/assets/arch.png)
+![architecture2](/assets/arch.png)
 
 We've used in the project a slightly different version removing the penultimate conv layer (in blue in the figure). The original paper used this conv layer of output 313 activation filters 
 to create a color probability distribution for each pixel, in a quantized color space of dimension 313. The color ab frame in the original paper is then created using a decode function.
 
 In our implementation, the color ab frame output is obtained of the output of a conv layer of 2-out activations filters, immediatly after the conv8 layer, as showed bellow:
 
-![architecture](/assets/arch2.jpeg)
+![architecture3](/assets/arch2.jpeg)
 
 
 ### Link to Presentation
