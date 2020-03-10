@@ -97,7 +97,7 @@ def test(model, dataloader):
 
         model.eval()
         
-        model = nn.DataParallel(model)
+        # model = nn.DataParallel(model)
         model = gpu(model)
 
         n_data = len(dataloader.dataset)
