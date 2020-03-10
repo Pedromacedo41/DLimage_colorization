@@ -21,9 +21,9 @@ from utils.data import ImageDataset
 def parse_args():
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('--images', default=None, required=True, type=str)
-    parser.add_argument('--mode', default=None, required=True, type=str)
-    parser.add_argument('--new', action='store_false')
-    parser.add_argument('--focal', action='store_false')
+    parser.add_argument('--train', action='store_true')
+    parser.add_argument('--new', action='store_true')
+    parser.add_argument('--focal', action='store_true')
 
     args = parser.parse_args()
     return args
@@ -217,21 +217,26 @@ def train(args, n_epochs=100, load_model=False):
             #print(f'Loss: {loss.item()}')
             #print(f'Processed {processed} out of {n_data}: {100*processed/n_data} %')
         print(f'Epoch: {e}\nMean loss: {running_loss}\n')
-        try:
-            os.replace('model_l2_focal.pt', 'model_l2_focal_prev.pt')
-        except:
-            pass
-        torch.save(model.module.state_dict(), 'model_l2_focal.pt')
+        if args.focal:
+            try:
+                os.replace('model_l2_focal.pt', 'model_l2_focal_prev.pt')
+            except:
+                pass
+            torch.save(model.module.state_dict(), 'model_l2_focal.pt')
+        else:
+            try:
+                os.replace('model_l2.pt', 'model_l2_prev.pt')
+            except:
+                pass
+            torch.save(model.module.state_dict(), 'model_l2.pt')
 
 
 def main():
     args = parse_args()
-    if(args.mode == 'train'):
+    if(args.train):
         train(args, load_model = not args.new)
-    elif args.mode == 'test':
-        test(args)
     else:
-        print('Invalid mode')
+        test(args)
 
 
 if __name__ == '__main__': 
