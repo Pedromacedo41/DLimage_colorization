@@ -1,3 +1,4 @@
+import torch
 from torch.utils.data import Dataset
 from torchvision import transforms
 import pathlib
@@ -40,7 +41,7 @@ class ImageDataset(Dataset):
     rgb = np.array(rgb)
     Lab = color.rgb2lab(rgb).astype(np.float32).transpose(2,0,1)
     l = Lab[0,:,:][np.newaxis, ...]/100
-    return (torch.from_numpy(l), rgb)
+    return (torch.from_numpy(l).unsqueeze(0), rgb)
 
   
 

@@ -93,14 +93,8 @@ def test(args):
         model = colorization_deploy_v1(T=0.38)
         model.load_state_dict(torch.load('model_l2.pt'))
         model.eval()
-        #model = nn.DataParallel(model)
+        model = nn.DataParallel(model)
         model = gpu(model)
-
-        im, real = dataset.get_img(0)
-        im = model.predict_rgb(im)
-        io.imsave('pred.png', im)
-        io.imsave('real.png', im)
-        return
 
         n_data = len(dataloader.dataset)
 
@@ -125,12 +119,22 @@ def test(args):
         sorted_losses = sorted(losses,key=itemgetter(0))
 
         list_best = [a[1] for a in sorted_losses[0:10]] 
-        list_worse = [a[1] for a in sorted_losses[-11:-1]] 
+        list_worst = [a[1] for a in sorted_losses[-11:-1]] 
 
-        #print(list_best) 
-        #print(list_worse)
+        for i in list_best:
+            im, real = dataset.get_img(i)
+            im = gpu(im)
+            im = model.predict_rgb(im)
+            io.imsave(f'output/best/{i}_pred.png', im)
+            io.imsave(f'output/best/{i}_real.png', real)
 
-        return list_best, list_worse
+        for i in list_worst:
+            im, real = dataset.get_img(i)
+            im = gpu(im)
+            im = model.predict_rgb(im)
+            io.imsave(f'output/worst/{i}_pred.png', im)
+            io.imsave(f'output/worst/{i}_real.png', real)
+
 
 def train(args, n_epochs=100, load_model=False):
     batch_size = 224
@@ -193,5 +197,5 @@ if __name__ == '__main__':
     #torch.autograd.set_detect_anomaly(True)
     args = parse_args()
     #train(args, load_model=True)
-    best, worst = test(args)
+    test(args)
 
