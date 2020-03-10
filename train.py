@@ -93,54 +93,54 @@ def test(args):
         model = colorization_deploy_v1(T=0.38)
         model.load_state_dict(torch.load('model_l2.pt'))
         model.eval()
-        # model = nn.DataParallel(model)
+        model = nn.DataParallel(model)
         model = gpu(model)
 
         n_data = len(dataloader.dataset)
 
-        # processed = 0
-        # i=0
-        # for inputs, inputs_ab, classes in dataloader:
+        processed = 0
+        i=0
+        for inputs, inputs_ab, classes in dataloader:
 
-        #     inputs = gpu(inputs)
-        #     inputs_ab = gpu(inputs_ab.detach())
-        #     outputs = model(inputs)
+            inputs = gpu(inputs)
+            inputs_ab = gpu(inputs_ab.detach())
+            outputs = model(inputs)
 
-        #     bs = inputs.shape[0]
+            bs = inputs.shape[0]
         
-        #     loss = f.mse_loss(outputs, inputs_ab, reduction='none').view(bs, -1).mean(1)
-        #     for l in loss:
-        #         i+=1
-        #         losses.append((l.item(), i))
+            loss = f.mse_loss(outputs, inputs_ab, reduction='none').view(bs, -1).mean(1)
+            for l in loss:
+                i+=1
+                losses.append((l.item(), i))
 
-        #     processed += inputs.shape[0]
-        #     print(f'Processed {processed} out of {n_data}: {100*processed/n_data} %')
+            processed += inputs.shape[0]
+            print(f'Processed {processed} out of {n_data}: {100*processed/n_data} %')
 
-        for i in range(10):
+        # for i in range(10):
+        #     im, real = dataset.get_img(i)
+        #     im = gpu(im)
+        #     im = model.predict_rgb(im)
+        #     io.imsave(f'scenes/rand/{i}_pred.png', im)
+        #     io.imsave(f'scenes/rand/{i}_real.png', real)
+
+        sorted_losses = sorted(losses,key=itemgetter(0))
+
+        list_best = [a[1] for a in sorted_losses[0:50]] 
+        list_worst = [a[1] for a in sorted_losses[-51:-1]] 
+
+        for i in list_best:
             im, real = dataset.get_img(i)
             im = gpu(im)
-            im = model.predict_rgb(im)
-            io.imsave(f'scenes/rand/{i}_pred.png', im)
-            io.imsave(f'scenes/rand/{i}_real.png', real)
+            im = model.module.predict_rgb(im)
+            io.imsave(f'output/best/{i}_pred.png', im)
+            io.imsave(f'output/best/{i}_real.png', real)
 
-        # sorted_losses = sorted(losses,key=itemgetter(0))
-
-        # list_best = [a[1] for a in sorted_losses[0:10]] 
-        # list_worst = [a[1] for a in sorted_losses[-11:-1]] 
-
-        # for i in list_best:
-        #     im, real = dataset.get_img(i)
-        #     im = gpu(im)
-        #     im = model.predict_rgb(im)
-        #     io.imsave(f'output/best/{i}_pred.png', im)
-        #     io.imsave(f'output/best/{i}_real.png', real)
-
-        # for i in list_worst:
-        #     im, real = dataset.get_img(i)
-        #     im = gpu(im)
-        #     im = model.predict_rgb(im)
-        #     io.imsave(f'output/worst/{i}_pred.png', im)
-        #     io.imsave(f'output/worst/{i}_real.png', real)
+        for i in list_worst:
+            im, real = dataset.get_img(i)
+            im = gpu(im)
+            im = model.module.predict_rgb(im)
+            io.imsave(f'output/worst/{i}_pred.png', im)
+            io.imsave(f'output/worst/{i}_real.png', real)
 
 
 def train(args, n_epochs=100, load_model=False):
