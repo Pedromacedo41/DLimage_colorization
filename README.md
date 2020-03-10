@@ -58,7 +58,7 @@ In our implementation, the color ab frame output is obtained of the output of a 
 - [Sun Images Objects](http://groups.csail.mit.edu/vision/SUN/releases/SUN2012.tar.gz) : 16,873 images, tar file (7.3GB)
 
 
-## Download trained models:
+## Download trained models
 - [Drive](https://drive.google.com/drive/folders/1QOLfamHMK9Ond7sVJlLGrf7eh1OFC1Vi?usp=sharing)
 
 ## Link to results drive folder
