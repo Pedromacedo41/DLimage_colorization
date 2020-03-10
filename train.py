@@ -87,16 +87,19 @@ def focal_loss(input, img_ab):
 
     return z2.sum()
 
-def train(args, n_epochs=4):
+def train(args, n_epochs=100, load_model=False):
     batch_size = 224
     lr = 1e-4
 
     dataset = ImageDataset(args.images)
-    dataloader = DataLoader(dataset, batch_size, True, num_workers=16)
+    dataloader = DataLoader(dataset, batch_size, True, num_workers=16, pin_memory=True)
 
-    model = colorization_deploy_v1(T=0.38)
-    model = nn.DataParallel(model)
-    model = gpu(model)
+    if load_model:
+        model = torch.load('model')
+    else:
+        model = colorization_deploy_v1(T=0.38)
+        model = nn.DataParallel(model)
+        model = gpu(model)
     
     optimizer = torch.optim.Adam(model.parameters(),lr=lr)
 
@@ -117,10 +120,14 @@ def train(args, n_epochs=4):
             optimizer.step()
             running_loss+=loss.item()
             processed += inputs.shape[0]
-            print(f'Loss: {loss.item()}')
+            #print(f'Loss: {loss.item()}')
             print(f'Processed {processed} out of {n_data}: {100*processed/n_data} %')
         print(f'Epoch: {e}\nMean loss: {running_loss}\n')
-        model.save(f'model_{e}')
+        try:
+            os.replace('model', 'model_prev')
+        except:
+            pass
+        torch.save(model, 'model')
 
 
 def main():
@@ -139,5 +146,5 @@ def main():
 if __name__ == '__main__': 
     # torch.autograd.set_detect_anomaly(True)
     args = parse_args()
-    train(args)
+    train(args, load_model=True)
 
