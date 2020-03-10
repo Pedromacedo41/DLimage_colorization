@@ -35,10 +35,10 @@ def parse_args():
 
 
 def return_model():
-    #model = colorization_deploy_v1(T=0.38)
-    #model.load_state_dict(torch.load("converted.h5"))
-    #model.eval()
-    model = torch.load("./../../base.pt")
+    model = colorization_deploy_v1(T=0.38)
+    model.load_state_dict(torch.load("converted.h5"))
+    model.eval()
+    #model = torch.load("./../../base.pt")
     return model
 
 def plot(im, interp=False):
