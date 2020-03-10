@@ -1,3 +1,4 @@
+import torch
 from torch.utils.data import Dataset
 from torchvision import transforms
 import pathlib
@@ -26,12 +27,21 @@ class ImageDataset(Dataset):
     rgb = transforms.Resize((256,256), Image.BICUBIC)(rgb)
     rgb = np.array(rgb)
     Lab = color.rgb2lab(rgb).astype(np.float32).transpose(2,0,1)
-    l = Lab[0,:,:][np.newaxis, ...]
-    ab = Lab[[1,2],:,:]
+    l = Lab[0,:,:][np.newaxis, ...]/100
+    ab = (Lab[[1,2],:,:]+128)/256
     return (l, ab, _class)
 
   def __len__(self):
     return len(self.images)
+
+  def get_img(self, idx):
+    _path, _class = self.images[idx]
+    rgb = Image.open(_path).convert("RGB")
+    rgb = transforms.Resize((256,256), Image.BICUBIC)(rgb)
+    rgb = np.array(rgb)
+    Lab = color.rgb2lab(rgb).astype(np.float32).transpose(2,0,1)
+    l = Lab[0,:,:][np.newaxis, ...]/100
+    return (torch.from_numpy(l).unsqueeze(0), rgb)
 
   
 

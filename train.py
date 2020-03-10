@@ -1,6 +1,7 @@
 import os
 import torch
 import torch.nn as nn
+import torch.nn.functional as f
 from torch.utils.data import DataLoader
 import numpy as np 
 import argparse
@@ -42,6 +43,7 @@ nnenc = NNEncode(nb_neighboors,sigma,km_filepath=os.path.join(ENC_DIR,'pts_in_hu
 # weights for balanced loss
 priors = PriorFactor(1, gamma= 0.5, priorFile=os.path.join(ENC_DIR,'prior_probs.npy'))
 
+
 def loss_fn(imput, img_ab, device='cpu:0'):
     #d2 = gpu(torch.tensor(nnenc.encode_points_mtx_nd(img_ab.numpy()), dtype= torch.float32))
     d2 = torch.tensor(nnenc.encode_points_mtx_nd(img_ab.numpy()), dtype= torch.float32).to(device)
@@ -56,104 +58,126 @@ def loss_fn(imput, img_ab, device='cpu:0'):
 
     return z2.sum()
 
-def logist_mask(relative_loss):
-    """
-    relative_loss = pixel_loss / max_loss (<= 1)
-    """
-    return 1 / (1 + 20 * torch.exp(-15 * relative_loss))
+def logist_mask(x):
+    return torch.sigmoid(40*(x-.5))
 
-def focal_loss(input, img_ab):
-    gpu(imput)
-    d2 = torch.tensor(nnenc.encode_points_mtx_nd(img_ab), dtype= torch.float32)
-    # dimension 1 x 224 x 224
-    gpu(d2)
-    weights = priors.compute(imput)
- 
-    z2 = torch.sum(-imput.log().mul(d2), dim=1)
-    gpu(z2)
-    z2 = z2.mul(weights)
+def focal_loss(_input, input_ab):
+    output = f.mse_loss(_input, input_ab, reduction='none')
 
     # Max pixel loss
-    max_ = torch.max(z2)
+    max_ = torch.max(output)
 
-    # Copy z2 to a new tensor
-    Rel_loss = z2.clone()
-    Rel_loss.requires_grad_(False)
-
-    Rel_loss = Rel_loss / max_
+    # Compute relative loss
+    aux = output.detach()
+    aux = aux / max_
 
     # Mask
-    mask_ = logist_mask(Rel_loss)
-    z2 = z2.mul(mask_.data)
+    aux = logist_mask(aux)
+    output = output.mul(aux)
 
-    return z2.sum()
+    return output.sum()/aux.sum()
 
 def plot(im, interp=False):
     f = plt.figure(figsize=(5,10), frameon=True)
     plt.imshow(im, interpolation=None if interp else 'none')
 
 # return list of index of 10 best images colorization and 10 worst images colorizations
-def test(model, dataloader):
-    batch_size = 1
-    losses = []
+def test(args):
+    with torch.no_grad():
+        batch_size = 224
+        losses = []
 
-    model = nn.DataParallel(model, range(3), 3)
-    model = gpu(model)
-    
-    n_data = len(dataloader.dataset)
+        dataset = ImageDataset(args.images)
+        dataloader = DataLoader(dataset, batch_size, False, num_workers=16)
 
-    processed = 0
-    i=0
-    for inputs, inputs_ab, classes in dataloader:
-        inputs = gpu(inputs)
-        inputs_ab = inputs_ab.detach()
-        outputs = model(inputs)
-    
-        loss = loss_fn(outputs, inputs_ab, 'cuda:3')
-        losses.append((loss, i))
+        model = colorization_deploy_v1(T=0.38)
+        model.load_state_dict(torch.load('model_l2.pt'))
+        model.eval()
+        model = nn.DataParallel(model)
+        model = gpu(model)
 
-        processed += inputs.shape[0]
-        print(f'Processed {processed} out of {n_data}: {100*processed/n_data} %')
-        i+=1
+        n_data = len(dataloader.dataset)
 
-    
-    sorted_losses = sorted(losses,key=itemgetter(0))
+        processed = 0
+        i=0
+        for inputs, inputs_ab, classes in dataloader:
 
-    list_best = [a[0] for a in sorted_losses[0:10]] 
-    list_worse = [a[0] for a in sorted_losses[-11:-1]] 
+            inputs = gpu(inputs)
+            inputs_ab = gpu(inputs_ab.detach())
+            outputs = model(inputs)
 
-    return list_best, list_worse
+            bs = inputs.shape[0]
+        
+            loss = f.mse_loss(outputs, inputs_ab, reduction='none').view(bs, -1).mean(1)
+            for l in loss:
+                i+=1
+                losses.append((l.item(), i))
 
-def train(args, n_epochs=4):
-    batch_size = 42
+            processed += inputs.shape[0]
+            print(f'Processed {processed} out of {n_data}: {100*processed/n_data} %')
+
+        sorted_losses = sorted(losses,key=itemgetter(0))
+
+        list_best = [a[1] for a in sorted_losses[0:10]] 
+        list_worst = [a[1] for a in sorted_losses[-11:-1]] 
+
+        for i in list_best:
+            im, real = dataset.get_img(i)
+            im = gpu(im)
+            im = model.predict_rgb(im)
+            io.imsave(f'output/best/{i}_pred.png', im)
+            io.imsave(f'output/best/{i}_real.png', real)
+
+        for i in list_worst:
+            im, real = dataset.get_img(i)
+            im = gpu(im)
+            im = model.predict_rgb(im)
+            io.imsave(f'output/worst/{i}_pred.png', im)
+            io.imsave(f'output/worst/{i}_real.png', real)
+
+
+def train(args, n_epochs=100, load_model=False):
+    batch_size = 224
     lr = 1e-4
 
     dataset = ImageDataset(args.images)
-    dataloader = DataLoader(dataset, batch_size, True, num_workers=16)
+    dataloader = DataLoader(dataset, batch_size, True, num_workers=16, pin_memory=False)
 
     model = colorization_deploy_v1(T=0.38)
-    model = nn.DataParallel(model, range(3), 3)
-    model = gpu(model)
+
+    if load_model:
+        model.load_state_dict(torch.load('model_l2_focal.pt'))
     
+    model = nn.DataParallel(model)
+    model = gpu(model)
+
     optimizer = torch.optim.Adam(model.parameters(),lr=lr)
 
     n_data = len(dataloader.dataset)
+
+    loss_fn = focal_loss
 
     for e in range(n_epochs):
         running_loss = 0
         processed = 0
         for inputs, inputs_ab, classes in dataloader:
             inputs = gpu(inputs)
-            inputs_ab = inputs_ab.detach()
+            inputs_ab = gpu(inputs_ab)
             outputs = model(inputs)
             optimizer.zero_grad()
-            loss = loss_fn(outputs, inputs_ab, 'cuda:3')
+            loss = loss_fn(outputs, inputs_ab)
             loss.backward()
             optimizer.step()
             running_loss+=loss.item()
             processed += inputs.shape[0]
-            print(f'Processed {processed} out of {n_data}: {100*processed/n_data} %')
-        print(f'Epoch: {e}\nMean loss: {n_data}\n')
+            #print(f'Loss: {loss.item()}')
+            #print(f'Processed {processed} out of {n_data}: {100*processed/n_data} %')
+        print(f'Epoch: {e}\nMean loss: {running_loss}\n')
+        try:
+            os.replace('model_l2_focal.pt', 'model_l2_focal_prev.pt')
+        except:
+            pass
+        torch.save(model.module.state_dict(), 'model_l2_focal.pt')
 
 
 def main():
@@ -170,7 +194,8 @@ def main():
 
 
 if __name__ == '__main__': 
-    # torch.autograd.set_detect_anomaly(True)
+    #torch.autograd.set_detect_anomaly(True)
     args = parse_args()
-    train(args)
+    #train(args, load_model=True)
+    test(args)
 

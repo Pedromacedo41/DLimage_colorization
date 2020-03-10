@@ -11,10 +11,9 @@ import scipy.ndimage.interpolation as sni
 
 
 class colorization_deploy_v1(nn.Module):
-    def __init__(self, T=0.38, decoding_layer= False):
+    def __init__(self, T=0.38, ab_mode= False):
         super(colorization_deploy_v1, self).__init__()
         self.T= T
-        self.deconding_layer = decoding_layer
 
         self.conv1_1 = nn.Conv2d(1,64, kernel_size=3, stride=1, padding=1)
         self.conv1_2 = nn.Conv2d(64,64, kernel_size=3, stride=2, padding=1)
@@ -46,8 +45,8 @@ class colorization_deploy_v1(nn.Module):
         self.conv8_2 = nn.Conv2d(256,256, kernel_size=3, stride=1, padding=1)
         self.conv8_3 = nn.Conv2d(256,256, kernel_size=3, stride=1, padding=1)
 
-        #self.conv8_313 = nn.Conv2d(256,313, kernel_size=1, stride=1)
-        self.conv_ab = nn.Conv2d(256,2, kernel_size=1, stride=1)
+        # self.conv8_313 = nn.Conv2d(256,313, kernel_size=1, stride=1)
+        self.conv_ab = nn.Conv2d(256, 2, kernel_size=1, stride=1)
 
         self.bn1 = nn.BatchNorm2d(64)
         self.bn2 = nn.BatchNorm2d(128)
@@ -117,28 +116,42 @@ class colorization_deploy_v1(nn.Module):
             nn.ReLU(),
             self.conv8_3,
             nn.ReLU(),
-            self.conv_ab
-            #nn.Upsample(scale_factor=4, mode='nearest')
+            self.conv_ab,
+
+            nn.Upsample(scale_factor=4, mode='bicubic')
         )
 
     def forward(self, input):
         return self.lin(input)
+
+    def lab2rgb(self, input_l, input_ab):
+        lab = np.concatenate
     
-    def predict(self, input):
-        img_lab = color.rgb2lab(input) # convert image to lab color space
-        img_l = img_lab[:,:,0] # pull out L channel
-        # (H_orig,W_orig) = input.size[:2] # original image size
-        mean_img_l = torch.as_tensor(img_l-50, dtype=torch.float32)
-        mean_img_l.unsqueeze_(0).unsqueeze_(0)
-        pred_ab = self.forward(mean_img_l).squeeze(0)
-        d = pred_ab.detach().numpy().transpose((1, 2, 0))
-        # upsample to match size of original image L
-        ab_dec_us = sni.zoom(d, (4, 4, 1))
-        # concatenate with original image L
-        img_lab_out = np.concatenate((img_l[:, :, np.newaxis], ab_dec_us), axis=2)
-        img_rgb_out = np.clip(color.lab2rgb(256*img_lab_out-128),
-                              0, 1)  # convert back to rgb
-        return img_rgb_out
+    def predict_rgb(self, input_l):
+        pred_ab = self.forward(input_l)*256 - 128
+        input_l *= 100
+        pred_ab = pred_ab.squeeze(0).cpu()
+        input_l = input_l.squeeze(0).cpu()
+        lab = np.concatenate((input_l, pred_ab), axis=0)
+        lab = lab.transpose((1,2,0))
+        print(lab)
+        rgb = color.lab2rgb(lab)
+        print(rgb)
+        return rgb
+        #img_lab = color.rgb2lab(input) # convert image to lab color space
+        #img_l = img_lab[:,:,0] # pull out L channel
+        ## (H_orig,W_orig) = input.size[:2] # original image size
+        #mean_img_l = torch.as_tensor(img_l-50, dtype=torch.float32)
+        #mean_img_l.unsqueeze_(0).unsqueeze_(0)
+        #pred_ab = self.forward(mean_img_l).squeeze(0)
+        #d = pred_ab.detach().numpy().transpose((1, 2, 0))
+        ## upsample to match size of original image L
+        #ab_dec_us = sni.zoom(d, (4, 4, 1))
+        ## concatenate with original image L
+        #img_lab_out = np.concatenate((img_l[:, :, np.newaxis], ab_dec_us), axis=2)
+        #img_rgb_out = np.clip(color.lab2rgb(256*img_lab_out-128),
+        #                      0, 1)  # convert back to rgb
+        #return img_rgb_out
         
 
     def fill_weights(self):
