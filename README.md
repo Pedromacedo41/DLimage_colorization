@@ -1,19 +1,20 @@
 
-<center>
 
-![exp](/assets/exp.jfif) 
 
 # Image Colorization
 
-</center>
 
 Pytorch implementation of VGG architecture with 3 different loss functions: L2 norm loss, balanced class cross-entropy loss 
 ([Balanced class cross-entropy loss reference Paper](https://arxiv.org/pdf/1603.08511.pdf)) and custom defined focal loss using the precedent defined loss, implemented end to end.
+
+![exp](/assets/exp.jfif) 
+(ground truth/black and white/prediction)
 
 We present deployed versions of 2 variants: L2 norm loss and focal loss with L2 norm.
 The models were trained in google cloud, using VM instances of specificaions: n1-highmem-16(16 vCPUs, 104 GB memory), GPU: 4 x NVIDIA Tesla V100
 
 The training was parallelized along 3 machines, training time taking about 1h~2h of average each.
+
 
 ### Reference Archictecture
 
