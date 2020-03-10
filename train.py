@@ -94,9 +94,6 @@ def train(args, n_epochs=100, load_model=False):
         model = colorization_deploy_v1(T=0.38)
         model = nn.DataParallel(model)
         model = gpu(model)
-
-    print(model)
-
    
     optimizer = torch.optim.Adam(model.parameters(),lr=lr)
 
@@ -111,7 +108,7 @@ def train(args, n_epochs=100, load_model=False):
             inputs = gpu(inputs)
             inputs_ab = gpu(inputs_ab)
             outputs = model(inputs)
-            outputs = f.interpolate(outputs, scale_factor=4)
+            outputs = f.interpolate(outputs, scale_factor=4, mode='bicubic')
             optimizer.zero_grad()
             loss = loss_fn(outputs, inputs_ab)
             loss.backward()
@@ -119,13 +116,13 @@ def train(args, n_epochs=100, load_model=False):
             running_loss+=loss.item()
             processed += inputs.shape[0]
             #print(f'Loss: {loss.item()}')
-            print(f'Processed {processed} out of {n_data}: {100*processed/n_data} %')
+            #print(f'Processed {processed} out of {n_data}: {100*processed/n_data} %')
         print(f'Epoch: {e}\nMean loss: {running_loss}\n')
         try:
-            os.replace('model', 'model_prev')
+            os.replace('model_pre.pt', 'model_pre_prev.pt')
         except:
             pass
-        torch.save(model, 'model')
+        torch.save(model.module.state_dict(), 'model_pre.pt')
 
 
 def main():
@@ -139,6 +136,7 @@ def main():
     gpu(output)
 
     print(loss_fn(output, img_ab))
+
 
 
 if __name__ == '__main__': 
