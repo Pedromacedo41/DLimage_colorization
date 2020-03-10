@@ -82,7 +82,7 @@ def plot(im, interp=False):
     plt.imshow(im, interpolation=None if interp else 'none')
 
 # return list of index of 10 best images colorization and 10 worst images colorizations
-def test(model):
+def test(args):
     with torch.no_grad():
         batch_size = 224
         losses = []
@@ -93,6 +93,7 @@ def test(model):
         model = colorization_deploy_v1(T=0.38)
         model.load_state_dict(torch.load('model_l2.pt'))
         model.eval()
+        model = nn.DataParallel(model)
         model = gpu(model)
 
         n_data = len(dataloader.dataset)
@@ -104,24 +105,24 @@ def test(model):
             inputs = gpu(inputs)
             inputs_ab = gpu(inputs_ab.detach())
             outputs = model(inputs)
+
+            bs = inputs.shape[0]
         
-            loss = f.mse_loss(outputs, inputs_ab)
-            print(loss)
-            '''
+            loss = f.mse_loss(outputs, inputs_ab, reduction='none').view(bs, -1).mean(1)
             for l in loss:
                 i+=1
-                if i%100 == 0:
-                    print(f'Processed {processed} out of {n_data}: {100*processed/n_data} %')
-            '''
+                losses.append((l.item(), i))
 
             processed += inputs.shape[0]
+            print(f'Processed {processed} out of {n_data}: {100*processed/n_data} %')
 
-        print(losses)
-        
         sorted_losses = sorted(losses,key=itemgetter(0))
 
-        list_best = [a[0] for a in sorted_losses[0:10]] 
-        list_worse = [a[0] for a in sorted_losses[-11:-1]] 
+        list_best = [a[1] for a in sorted_losses[0:10]] 
+        list_worse = [a[1] for a in sorted_losses[-11:-1]] 
+
+        print(list_best) 
+        print(list_worse)
 
         return list_best, list_worse
 
@@ -185,5 +186,6 @@ def main():
 if __name__ == '__main__': 
     #torch.autograd.set_detect_anomaly(True)
     args = parse_args()
-    train(args, load_model=True)
+    #train(args, load_model=True)
+    test(args)
 
