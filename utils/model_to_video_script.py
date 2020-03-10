@@ -7,6 +7,7 @@ from torchvision import transforms
 from skimage import color
 from PIL import Image
 from color_quantization import NNEncode
+from matplotlib import pyplot as plt
 
 import numpy as np
 sys.path.append('./../models')
@@ -37,20 +38,17 @@ def return_model():
     #model = colorization_deploy_v1(T=0.38)
     #model.load_state_dict(torch.load("converted.h5"))
     #model.eval()
-    model = torch.load("./../models/base.pt")
+    model = torch.load("./../../base.pt")
     return model
 
+def plot(im, interp=False):
+    f = plt.figure(figsize=(5,10), frameon=True)
+    plt.imshow(im, interpolation=None if interp else 'none')
 
 def image():
-    rgb = color.rgb2lab(frame)
-            #rgb = transforms.Resize((256,256), Image.BICUBIC)(rgb)
-    rgb = np.array(rgb)
-    Lab = color.rgb2lab(rgb).astype(np.float32).transpose(2,0,1)
-    l = Lab[0,:,:][np.newaxis, np.newaxis,...]
-            
-    tr = model(torch.as_tensor(l))
-    tr = nnenc.decode_points_mtx_nd(tr.detach().numpy())
-
+    img_rgb = Image.open("sun.jpg")
+    model = return_model()
+    plot(model.predict(img_rgb))
 
 def main(args):
     

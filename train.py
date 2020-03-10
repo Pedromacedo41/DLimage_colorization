@@ -4,6 +4,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 import numpy as np 
 import argparse
+from matplotlib import pyplot as plt
 
 # to transform image to Lab color scale
 from skimage import io, color
@@ -85,6 +86,10 @@ def focal_loss(input, img_ab):
     z2 = z2.mul(mask_.data)
 
     return z2.sum()
+
+def plot(im, interp=False):
+    f = plt.figure(figsize=(5,10), frameon=True)
+    plt.imshow(im, interpolation=None if interp else 'none')
 
 def train(args, n_epochs=4):
     batch_size = 42
